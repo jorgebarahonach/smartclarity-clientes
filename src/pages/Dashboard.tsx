@@ -52,6 +52,12 @@ export default function Dashboard() {
 
       setCompany(companyData)
 
+      // If no company found, nothing else to load
+      if (!companyData) {
+        setProjects([])
+        return
+      }
+
       // Get projects for this company
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
