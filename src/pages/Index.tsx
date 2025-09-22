@@ -75,29 +75,6 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
-
-        <div className="mt-16 text-center">
-          <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Archivos</h3>
-              <p className="text-sm text-muted-foreground">
-                Documentos generales del proyecto
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Manuales</h3>
-              <p className="text-sm text-muted-foreground">
-                Guías de instalación y mantenimiento
-              </p>
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Planos</h3>
-              <p className="text-sm text-muted-foreground">
-                Diagramas técnicos y esquemas
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
