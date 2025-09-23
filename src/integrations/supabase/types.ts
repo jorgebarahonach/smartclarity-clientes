@@ -20,18 +20,21 @@ export type Database = {
           email: string
           id: string
           name: string
+          password_temp: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           id?: string
           name: string
+          password_temp?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
           name?: string
+          password_temp?: string | null
         }
         Relationships: []
       }
@@ -113,7 +116,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_company_auth_user: {
+        Args: { company_email: string; temp_password: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

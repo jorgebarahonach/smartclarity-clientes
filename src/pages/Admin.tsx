@@ -49,8 +49,11 @@ export default function Admin() {
   const [uploadLoading, setUploadLoading] = useState(false)
 
   // Form states
-  const [newCompany, setNewCompany] = useState({ name: '', email: '' })
+  const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
   const [newProject, setNewProject] = useState({ name: '', description: '', company_id: '' })
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
+  const [newPassword, setNewPassword] = useState('')
   const [uploadForm, setUploadForm] = useState({
     project_id: '',
     document_type: 'archivo' as 'manual' | 'plano' | 'archivo',
@@ -107,24 +110,150 @@ export default function Admin() {
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      // First create the auth user via edge function
+      const { data: authData, error: authError } = await supabase.functions.invoke('admin-create-user', {
+        body: { email: newCompany.email, password: newCompany.password }
+      })
+
+      if (authError) throw authError
+
+      // Then create the company record
       const { error } = await supabase
         .from('companies')
-        .insert([newCompany])
+        .insert([{ name: newCompany.name, email: newCompany.email }])
 
       if (error) throw error
 
       toast({
         title: "Éxito",
-        description: "Empresa creada correctamente",
+        description: "Empresa y usuario creados correctamente",
       })
       
-      setNewCompany({ name: '', email: '' })
+      setNewCompany({ name: '', email: '', password: '' })
       loadData()
     } catch (error) {
       console.error('Error creating company:', error)
       toast({
         title: "Error",
-        description: "Error al crear la empresa",
+        description: "Error al crear la empresa. Verifique que el email no esté en uso.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateCompany = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCompany) return
+
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ name: editingCompany.name, email: editingCompany.email })
+        .eq('id', editingCompany.id)
+
+      if (error) throw error
+
+      toast({
+        title: "Éxito",
+        description: "Empresa actualizada correctamente",
+      })
+      
+      setEditingCompany(null)
+      loadData()
+    } catch (error) {
+      console.error('Error updating company:', error)
+      toast({
+        title: "Error",
+        description: "Error al actualizar la empresa",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteCompany = async (companyId: string, companyEmail: string) => {
+    if (!confirm('¿Está seguro de que desea eliminar esta empresa? Esta acción no se puede deshacer.')) {
+      return
+    }
+
+    try {
+      // First, check if there are projects associated with this company
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('company_id', companyId)
+
+      if (projects && projects.length > 0) {
+        toast({
+          title: "Error",
+          description: "No se puede eliminar la empresa porque tiene proyectos asociados",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Delete the company record
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyId)
+
+      if (error) throw error
+
+      // Try to delete the auth user via edge function
+      try {
+        await supabase.functions.invoke('admin-delete-user', {
+          body: { email: companyEmail }
+        })
+      } catch (authError) {
+        console.warn('Could not delete auth user:', authError)
+      }
+
+      toast({
+        title: "Éxito",
+        description: "Empresa eliminada correctamente",
+      })
+      
+      loadData()
+    } catch (error) {
+      console.error('Error deleting company:', error)
+      toast({
+        title: "Error",
+        description: "Error al eliminar la empresa",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleResetPassword = async (companyEmail: string) => {
+    if (!newPassword) {
+      toast({
+        title: "Error",
+        description: "Ingrese una nueva contraseña",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // Update password via edge function
+      const { error } = await supabase.functions.invoke('admin-update-password', {
+        body: { email: companyEmail, password: newPassword }
+      })
+
+      if (error) throw error
+
+      toast({
+        title: "Éxito",
+        description: "Contraseña actualizada correctamente",
+      })
+      
+      setShowPasswordReset(null)
+      setNewPassword('')
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      toast({
+        title: "Error",
+        description: "Error al cambiar la contraseña",
         variant: "destructive",
       })
     }
@@ -260,13 +389,265 @@ export default function Admin() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="upload" className="w-full">
+        <Tabs defaultValue="companies" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="companies">Empresas</TabsTrigger>
+            <TabsTrigger value="projects">Proyectos</TabsTrigger>
             <TabsTrigger value="upload">Subir Documentos</TabsTrigger>
             <TabsTrigger value="documents">Gestionar Documentos</TabsTrigger>
-            <TabsTrigger value="projects">Proyectos</TabsTrigger>
-            <TabsTrigger value="companies">Empresas</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="companies" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Crear Empresa</CardTitle>
+                  <CardDescription>
+                    Crear una nueva empresa con cuenta de usuario para acceso al sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCreateCompany} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Nombre de la Empresa</Label>
+                        <Input
+                          id="companyName"
+                          value={newCompany.name}
+                          onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="companyEmail">Email</Label>
+                        <Input
+                          id="companyEmail"
+                          type="email"
+                          value={newCompany.email}
+                          onChange={(e) => setNewCompany(prev => ({ ...prev, email: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyPassword">Contraseña Inicial</Label>
+                      <Input
+                        id="companyPassword"
+                        type="password"
+                        value={newCompany.password}
+                        onChange={(e) => setNewCompany(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
+                    <Button type="submit">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear Empresa
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Empresas Existentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {companies.map((company) => (
+                      <div key={company.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{company.name}</h4>
+                            <p className="text-sm text-muted-foreground">{company.email}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingCompany(company)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowPasswordReset(company.email)}
+                            >
+                              Cambiar Clave
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteCompany(company.id, company.email)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Edit Company Modal */}
+              {editingCompany && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Editar Empresa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleUpdateCompany} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="editCompanyName">Nombre de la Empresa</Label>
+                          <Input
+                            id="editCompanyName"
+                            value={editingCompany.name}
+                            onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="editCompanyEmail">Email</Label>
+                          <Input
+                            id="editCompanyEmail"
+                            type="email"
+                            value={editingCompany.email}
+                            onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit">
+                          Actualizar Empresa
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setEditingCompany(null)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Password Reset Modal */}
+              {showPasswordReset && (
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Cambiar Contraseña</CardTitle>
+                    <CardDescription>
+                      Cambiando contraseña para: {showPasswordReset}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Mínimo 6 caracteres"
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleResetPassword(showPasswordReset)}>
+                          Cambiar Contraseña
+                        </Button>
+                        <Button variant="outline" onClick={() => {
+                          setShowPasswordReset(null)
+                          setNewPassword('')
+                        }}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="projects" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Crear Proyecto</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCreateProject} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="projectName">Nombre del Proyecto</Label>
+                        <Input
+                          id="projectName"
+                          value={newProject.name}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company">Empresa</Label>
+                        <Select 
+                          value={newProject.company_id} 
+                          onValueChange={(value) => setNewProject(prev => ({ ...prev, company_id: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar empresa" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descripción</Label>
+                      <Input
+                        id="description"
+                        value={newProject.description}
+                        onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                    <Button type="submit">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear Proyecto
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proyectos Existentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <div key={project.id} className="p-4 border rounded-lg">
+                        <h4 className="font-medium">{project.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {project.companies?.name}
+                        </p>
+                        {project.description && (
+                          <p className="text-sm mt-1">{project.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="upload" className="mt-6">
             <Card>
@@ -377,139 +758,6 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="projects" className="mt-6">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Crear Proyecto</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreateProject} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="projectName">Nombre del Proyecto</Label>
-                        <Input
-                          id="projectName"
-                          value={newProject.name}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Empresa</Label>
-                        <Select 
-                          value={newProject.company_id} 
-                          onValueChange={(value) => setNewProject(prev => ({ ...prev, company_id: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar empresa" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {companies.map((company) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Descripción</Label>
-                      <Input
-                        id="description"
-                        value={newProject.description}
-                        onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                      />
-                    </div>
-                    <Button type="submit">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Crear Proyecto
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Proyectos Existentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {projects.map((project) => (
-                      <div key={project.id} className="p-4 border rounded-lg">
-                        <h4 className="font-medium">{project.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {project.companies?.name}
-                        </p>
-                        {project.description && (
-                          <p className="text-sm mt-1">{project.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="companies" className="mt-6">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Crear Empresa</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreateCompany} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">Nombre de la Empresa</Label>
-                        <Input
-                          id="companyName"
-                          value={newCompany.name}
-                          onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyEmail">Email</Label>
-                        <Input
-                          id="companyEmail"
-                          type="email"
-                          value={newCompany.email}
-                          onChange={(e) => setNewCompany(prev => ({ ...prev, email: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Crear Empresa
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Empresas Existentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {companies.map((company) => (
-                      <div key={company.id} className="flex justify-between items-center p-4 border rounded-lg">
-                        <div>
-                          <h4 className="font-medium">{company.name}</h4>
-                          <p className="text-sm text-muted-foreground">{company.email}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
       </main>
