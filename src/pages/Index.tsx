@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, Users, Shield, LogOut } from 'lucide-react'
+import { Users, Shield, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import smartClarityLogo from '@/assets/smartclarity-logo.png'
 
 const Index = () => {
   const { user, signOut } = useAuth()
@@ -14,6 +15,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      <div className="absolute top-4 right-4">
+        <Button 
+          onClick={() => navigate('/admin/login')} 
+          variant="ghost" 
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          Administración de Portal
+        </Button>
+      </div>
+      
       {user && (
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -32,20 +44,24 @@ const Index = () => {
           </div>
         </div>
       )}
+      
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <Building2 className="h-16 w-16 text-primary" />
+            <img 
+              src={smartClarityLogo} 
+              alt="SmartClarity Logo" 
+              className="h-20 w-auto"
+            />
           </div>
           <h1 className="text-4xl font-bold mb-4">Portal de Clientes</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Plataforma para gestión de proyectos de energía eléctrica e infraestructura. 
-            Acceda a sus documentos, manuales y planos de manera segura.
+            Servicio para la gestión de documentos de clientes de Smartclariti.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card className="hover:shadow-lg transition-shadow">
+        <div className="flex justify-center max-w-md mx-auto">
+          <Card className="hover:shadow-lg transition-shadow w-full">
             <CardHeader className="text-center">
               <Users className="h-12 w-12 text-primary mx-auto mb-4" />
               <CardTitle>Acceso de Cliente</CardTitle>
@@ -56,21 +72,6 @@ const Index = () => {
             <CardContent className="text-center">
               <Button onClick={() => navigate('/login')} className="w-full">
                 Ingresar como Cliente
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="text-center">
-              <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-              <CardTitle>Panel Administrativo</CardTitle>
-              <CardDescription>
-                Acceso para administradores para gestionar empresas, proyectos y documentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Button onClick={() => navigate('/admin/login')} variant="outline" className="w-full">
-                Panel de Administración
               </Button>
             </CardContent>
           </Card>
