@@ -55,7 +55,7 @@ export function Footer() {
       
       // Check if it's a user/company not found error
       const errorMessage = error?.message || ''
-      if (errorMessage.includes('not found') || errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
+      if (errorMessage.includes('not found') || errorMessage.includes('invalid') || errorMessage.includes('unauthorized') || errorMessage.includes('company') || errorMessage.includes('user')) {
         toast({
           title: "Empresa o correo no encontrado",
           description: "La empresa y/o correo electrónico ingresados no están registrados en el Portal SmartClarity. Verifique los datos o contacte al administrador.",
