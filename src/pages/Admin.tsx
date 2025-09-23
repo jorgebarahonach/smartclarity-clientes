@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, Trash2, Plus } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ArrowLeft, Upload, Trash2, Plus, Edit } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 
 type Company = {
   id: string
@@ -34,7 +36,7 @@ type Document = {
   file_path: string
   file_type: string
   file_size: number
-  document_type: 'manual' | 'plano' | 'archivo'
+  document_type: 'manual' | 'plano' | 'archivo' | 'otro'
   created_at: string
   projects?: { name: string }
 }
@@ -55,9 +57,11 @@ export default function Admin() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [showNewCompanyForm, setShowNewCompanyForm] = useState(false)
+  const [showNewProjectForm, setShowNewProjectForm] = useState(false)
   const [uploadForm, setUploadForm] = useState({
     project_id: '',
-    document_type: 'archivo' as 'manual' | 'plano' | 'archivo',
+    document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'otro',
     file: null as File | null
   })
 
@@ -141,6 +145,7 @@ export default function Admin() {
       })
       
       setNewCompany({ name: '', email: '', password: '' })
+      setShowNewCompanyForm(false)
       loadData()
     } catch (error) {
       console.error('Error creating company:', error)
@@ -181,11 +186,13 @@ export default function Admin() {
     }
   }
 
-  const handleDeleteCompany = async (companyId: string, companyEmail: string) => {
-    if (!confirm('¿Está seguro de que desea eliminar esta empresa? Esta acción no se puede deshacer.')) {
-      return
+  const confirmDeleteCompany = (companyId: string, companyName: string, companyEmail: string) => {
+    if (confirm(`Borrará "${companyName}": ¿está seguro de esta acción irreversible?`)) {
+      handleDeleteCompany(companyId, companyEmail, companyName)
     }
+  }
 
+  const handleDeleteCompany = async (companyId: string, companyEmail: string, companyName: string) => {
     try {
       // First, check if there are projects associated with this company
       const { data: projects } = await supabase
@@ -221,7 +228,7 @@ export default function Admin() {
 
       toast({
         title: "Éxito",
-        description: "Empresa eliminada correctamente",
+        description: `Se ha borrado "${companyName}"`,
       })
       
       loadData()
@@ -299,12 +306,44 @@ export default function Admin() {
       })
       
       setNewProject({ name: '', description: '', company_id: '' })
+      setShowNewProjectForm(false)
       loadData()
     } catch (error) {
       console.error('Error creating project:', error)
       toast({
         title: "Error",
         description: "Error al crear el proyecto",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const confirmDeleteProject = (projectId: string, projectName: string) => {
+    if (confirm(`Borrará "${projectName}": ¿está seguro de esta acción irreversible?`)) {
+      handleDeleteProject(projectId, projectName)
+    }
+  }
+
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId)
+
+      if (error) throw error
+
+      toast({
+        title: "Éxito",
+        description: `Se ha borrado "${projectName}"`,
+      })
+      
+      loadData()
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      toast({
+        title: "Error",
+        description: "Error al eliminar el proyecto",
         variant: "destructive",
       })
     }
@@ -391,6 +430,12 @@ export default function Admin() {
     }
   }
 
+  // Group projects by company
+  const projectsByCompany = companies.map(company => ({
+    ...company,
+    projects: projects.filter(project => project.company_id === company.id)
+  }))
+
   // Show loading while checking authentication and permissions
   if (authLoading) {
     return (
@@ -404,8 +449,8 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header onSignOut={() => signOut()} />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header variant="admin" title="Panel Administrativo" />
       
       <div className="container mx-auto px-4 py-2">
         <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
@@ -414,143 +459,78 @@ export default function Admin() {
         </Button>
       </div>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs defaultValue="companies" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="companies">Empresas</TabsTrigger>
-            <TabsTrigger value="projects">Proyectos</TabsTrigger>
-            <TabsTrigger value="upload">Subir Documentos</TabsTrigger>
-            <TabsTrigger value="documents">Gestionar Documentos</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between mb-6">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4">
+              <TabsTrigger value="companies">Empresas</TabsTrigger>
+              <TabsTrigger value="projects">Proyectos</TabsTrigger>
+              <TabsTrigger value="upload">Subir Documentos</TabsTrigger>
+              <TabsTrigger value="documents">Gestionar Documentos</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="companies" className="mt-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Crear Empresa</CardTitle>
-                  <CardDescription>
-                    Crear una nueva empresa con cuenta de usuario para acceso al sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreateCompany} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">Nombre de la Empresa</Label>
-                        <Input
-                          id="companyName"
-                          value={newCompany.name}
-                          onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyEmail">Email</Label>
-                        <Input
-                          id="companyEmail"
-                          type="email"
-                          value={newCompany.email}
-                          onChange={(e) => setNewCompany(prev => ({ ...prev, email: e.target.value }))}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="companyPassword">Contraseña Inicial</Label>
-                      <Input
-                        id="companyPassword"
-                        type="password"
-                        value={newCompany.password}
-                        onChange={(e) => setNewCompany(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        placeholder="Mínimo 6 caracteres"
-                      />
-                    </div>
-                    <Button type="submit">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Crear Empresa
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+              <div className="flex justify-end">
+                <Button 
+                  variant="default" 
+                  onClick={() => setShowNewCompanyForm(true)}
+                  className="bg-black text-white hover:bg-black/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nueva empresa
+                </Button>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Empresas Existentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {companies.map((company) => (
-                      <div key={company.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium">{company.name}</h4>
-                            <p className="text-sm text-muted-foreground">{company.email}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingCompany(company)}
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowPasswordReset(company.email)}
-                            >
-                              Cambiar Clave
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteCompany(company.id, company.email)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Edit Company Modal */}
-              {editingCompany && (
-                <Card className="mt-6">
+              {showNewCompanyForm && (
+                <Card className="border-2">
                   <CardHeader>
-                    <CardTitle>Editar Empresa</CardTitle>
+                    <CardTitle>Crear Empresa</CardTitle>
+                    <CardDescription>
+                      Crear una nueva empresa con cuenta de usuario para acceso al sistema
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleUpdateCompany} className="space-y-4">
+                    <form onSubmit={handleCreateCompany} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="editCompanyName">Nombre de la Empresa</Label>
+                          <Label htmlFor="companyName">Nombre de la Empresa</Label>
                           <Input
-                            id="editCompanyName"
-                            value={editingCompany.name}
-                            onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                            id="companyName"
+                            value={newCompany.name}
+                            onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="editCompanyEmail">Email</Label>
+                          <Label htmlFor="companyEmail">Email</Label>
                           <Input
-                            id="editCompanyEmail"
+                            id="companyEmail"
                             type="email"
-                            value={editingCompany.email}
-                            onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
+                            value={newCompany.email}
+                            onChange={(e) => setNewCompany(prev => ({ ...prev, email: e.target.value }))}
                             required
                           />
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="companyPassword">Contraseña Inicial</Label>
+                        <Input
+                          id="companyPassword"
+                          type="password"
+                          value={newCompany.password}
+                          onChange={(e) => setNewCompany(prev => ({ ...prev, password: e.target.value }))}
+                          required
+                          placeholder="Mínimo 6 caracteres"
+                        />
+                      </div>
                       <div className="flex gap-2">
-                        <Button type="submit">
-                          Actualizar Empresa
+                        <Button type="submit" variant="action-green">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Crear Empresa
                         </Button>
-                        <Button type="button" variant="outline" onClick={() => setEditingCompany(null)}>
+                        <Button type="button" variant="outline" onClick={() => setShowNewCompanyForm(false)}>
                           Cancelar
                         </Button>
                       </div>
@@ -559,119 +539,233 @@ export default function Admin() {
                 </Card>
               )}
 
-              {/* Password Reset Modal */}
-              {showPasswordReset && (
-                <Card className="mt-6">
-                  <CardHeader>
-                    <CardTitle>Cambiar Contraseña</CardTitle>
-                    <CardDescription>
-                      Cambiando contraseña para: {showPasswordReset}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Mínimo 6 caracteres"
-                          required
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button onClick={() => handleResetPassword(showPasswordReset)}>
-                          Crear/Cambiar Contraseña
-                        </Button>
-                        <Button variant="outline" onClick={() => {
-                          setShowPasswordReset(null)
-                          setNewPassword('')
-                        }}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <div className="grid gap-4">
+                {companies.map((company) => (
+                  <div key={company.id} className="space-y-2">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{company.name}</h4>
+                            <p className="text-sm text-muted-foreground">{company.email}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="action-green"
+                              size="sm"
+                              onClick={() => setEditingCompany(company)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="action-yellow"
+                              size="sm"
+                              onClick={() => setShowPasswordReset(company.email)}
+                            >
+                              Cambiar Clave
+                            </Button>
+                            <Button
+                              variant="action-red"
+                              size="sm"
+                              onClick={() => confirmDeleteCompany(company.id, company.name, company.email)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Edit Company Form - appears below the company card */}
+                    {editingCompany && editingCompany.id === company.id && (
+                      <Card className="ml-4 border-2">
+                        <CardHeader>
+                          <CardTitle>Editar Empresa</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <form onSubmit={handleUpdateCompany} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="editCompanyName">Nombre de la Empresa</Label>
+                                <Input
+                                  id="editCompanyName"
+                                  value={editingCompany.name}
+                                  onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="editCompanyEmail">Email</Label>
+                                <Input
+                                  id="editCompanyEmail"
+                                  type="email"
+                                  value={editingCompany.email}
+                                  onChange={(e) => setEditingCompany(prev => prev ? ({ ...prev, email: e.target.value }) : null)}
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button type="submit" variant="action-green">
+                                Actualizar Empresa
+                              </Button>
+                              <Button type="button" variant="outline" onClick={() => setEditingCompany(null)}>
+                                Cancelar
+                              </Button>
+                            </div>
+                          </form>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Password Reset Form - appears below the company card */}
+                    {showPasswordReset === company.email && (
+                      <Card className="ml-4 border-2">
+                        <CardHeader>
+                          <CardTitle>Cambiar Contraseña</CardTitle>
+                          <CardDescription>
+                            Cambiando contraseña para: {showPasswordReset}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                              <Input
+                                id="newPassword"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Mínimo 6 caracteres"
+                                required
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="action-yellow" onClick={() => handleResetPassword(showPasswordReset)}>
+                                Crear/Cambiar Contraseña
+                              </Button>
+                              <Button variant="outline" onClick={() => {
+                                setShowPasswordReset(null)
+                                setNewPassword('')
+                              }}>
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="projects" className="mt-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Crear Proyecto</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleCreateProject} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+              <div className="flex justify-end">
+                <Button 
+                  variant="default" 
+                  onClick={() => setShowNewProjectForm(true)}
+                  className="bg-black text-white hover:bg-black/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Crear proyecto
+                </Button>
+              </div>
+
+              {showNewProjectForm && (
+                <Card className="border-2">
+                  <CardHeader>
+                    <CardTitle>Crear Proyecto</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleCreateProject} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="projectName">Nombre del Proyecto</Label>
+                          <Input
+                            id="projectName"
+                            value={newProject.name}
+                            onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="company">Empresa</Label>
+                          <Select 
+                            value={newProject.company_id} 
+                            onValueChange={(value) => setNewProject(prev => ({ ...prev, company_id: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar empresa" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {companies.map((company) => (
+                                <SelectItem key={company.id} value={company.id}>
+                                  {company.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                       <div className="space-y-2">
-                        <Label htmlFor="projectName">Nombre del Proyecto</Label>
+                        <Label htmlFor="description">Descripción</Label>
                         <Input
-                          id="projectName"
-                          value={newProject.name}
-                          onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                          required
+                          id="description"
+                          value={newProject.description}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">Empresa</Label>
-                        <Select 
-                          value={newProject.company_id} 
-                          onValueChange={(value) => setNewProject(prev => ({ ...prev, company_id: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar empresa" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {companies.map((company) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex gap-2">
+                        <Button type="submit" variant="action-green">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Crear Proyecto
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setShowNewProjectForm(false)}>
+                          Cancelar
+                        </Button>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Descripción</Label>
-                      <Input
-                        id="description"
-                        value={newProject.description}
-                        onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                      />
-                    </div>
-                    <Button type="submit">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Crear Proyecto
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Proyectos Existentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {projects.map((project) => (
-                      <div key={project.id} className="p-4 border rounded-lg">
-                        <h4 className="font-medium">{project.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {project.companies?.name}
-                        </p>
-                        {project.description && (
-                          <p className="text-sm mt-1">{project.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                {projectsByCompany.map((company) => (
+                  <Card key={company.id} className="p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold">{company.name}</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {company.projects.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No hay proyectos para esta empresa</p>
+                      ) : (
+                        company.projects.map((project) => (
+                          <Card key={project.id} className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium">{project.name}</h4>
+                                {project.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                )}
+                              </div>
+                              <Button
+                                variant="action-red"
+                                size="sm"
+                                onClick={() => confirmDeleteProject(project.id, project.name)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </div>
           </TabsContent>
 
@@ -680,13 +774,13 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>Subir Documento</CardTitle>
                 <CardDescription>
-                  Suba un nuevo documento a un proyecto específico
+                  Empresa → Proyecto → Nombre del documento → Tipo de documento → Archivo
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFileUpload} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="project">Proyecto</Label>
+                    <Label htmlFor="project">Empresa → Proyecto</Label>
                     <Select 
                       value={uploadForm.project_id} 
                       onValueChange={(value) => setUploadForm(prev => ({ ...prev, project_id: value }))}
@@ -697,7 +791,7 @@ export default function Admin() {
                       <SelectContent>
                         {projects.map((project) => (
                           <SelectItem key={project.id} value={project.id}>
-                            {project.name} - {project.companies?.name}
+                            {project.companies?.name} → {project.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -708,7 +802,7 @@ export default function Admin() {
                     <Label htmlFor="type">Tipo de Documento</Label>
                     <Select 
                       value={uploadForm.document_type} 
-                      onValueChange={(value: 'manual' | 'plano' | 'archivo') => 
+                      onValueChange={(value: 'manual' | 'plano' | 'archivo' | 'otro') => 
                         setUploadForm(prev => ({ ...prev, document_type: value }))
                       }
                     >
@@ -719,12 +813,15 @@ export default function Admin() {
                         <SelectItem value="archivo">Archivo</SelectItem>
                         <SelectItem value="manual">Manual</SelectItem>
                         <SelectItem value="plano">Plano</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="file">Archivo</Label>
+                    <Label htmlFor="file">
+                      Archivo - <span className="underline cursor-pointer">examinar</span>
+                    </Label>
                     <Input
                       id="file"
                       type="file"
@@ -736,7 +833,7 @@ export default function Admin() {
                     />
                   </div>
 
-                  <Button type="submit" disabled={uploadLoading || !uploadForm.file}>
+                  <Button type="submit" disabled={uploadLoading || !uploadForm.file} variant="action-green">
                     {uploadLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -757,28 +854,62 @@ export default function Admin() {
           <TabsContent value="documents" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Documentos</CardTitle>
+                <CardTitle>Gestionar Documentos</CardTitle>
                 <CardDescription>
-                  Lista de todos los documentos en el sistema
+                  Taxonomía por: empresas → proyectos → documentos → tipo de documentos
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{doc.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {doc.projects?.name} - {doc.document_type}
-                        </p>
+                <div className="space-y-6">
+                  {projectsByCompany.map((company) => (
+                    <div key={company.id} className="border rounded-lg">
+                      <div className="p-4 bg-muted">
+                        <h3 className="font-semibold">{company.name}</h3>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="p-4 space-y-4">
+                        {company.projects.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No hay proyectos para esta empresa</p>
+                        ) : (
+                          company.projects.map((project) => {
+                            const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                            return (
+                              <div key={project.id} className="border rounded">
+                                <div className="p-3 bg-muted/50">
+                                  <h4 className="font-medium">{project.name}</h4>
+                                  {project.description && (
+                                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                                  )}
+                                </div>
+                                <div className="p-3">
+                                  {projectDocuments.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {projectDocuments.map((doc) => (
+                                        <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                          <div>
+                                            <p className="font-medium text-sm">{doc.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                              Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
+                                            </p>
+                                          </div>
+                                          <Button
+                                            variant="action-red"
+                                            size="sm"
+                                            onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -787,6 +918,8 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      <Footer />
     </div>
   )
 }

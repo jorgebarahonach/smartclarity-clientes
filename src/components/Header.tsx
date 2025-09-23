@@ -51,7 +51,7 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
             </Button>
           )}
           
-          {user && variant === 'client' && (
+          {user && (variant === 'client' || variant === 'admin') && (
             <Button variant="outline" onClick={handleSignOut} size="sm" className="h-8">
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar Sesión

@@ -70,7 +70,7 @@ export function Footer() {
           <div>
             <img 
               src={smartClarityLogo} 
-              alt="SmartClarity Logo" 
+              alt="SmartClarity Logo"
               className="w-48 h-auto"
             />
           </div>
