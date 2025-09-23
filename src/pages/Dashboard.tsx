@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { LogOut, FolderOpen, Building2 } from 'lucide-react'
+import { FolderOpen } from 'lucide-react'
+import { Header } from '@/components/Header'
 
 type Company = {
   id: string
@@ -96,18 +97,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6" />
-            <h1 className="text-xl font-semibold">Portal de Clientes</h1>
-          </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Cerrar Sesión
-          </Button>
-        </div>
-      </header>
+      <Header onSignOut={handleSignOut} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

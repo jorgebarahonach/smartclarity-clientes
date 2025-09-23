@@ -1,30 +1,18 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Shield, LogOut } from 'lucide-react'
+import { Users, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { Header } from '@/components/Header'
 import smartClarityLogo from '@/assets/smartclarity-logo.png'
 
 const Index = () => {
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-
-  const handleSignOut = async () => {
-    await signOut()
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-      <div className="absolute top-4 right-4">
-        <Button 
-          onClick={() => navigate('/admin/login')} 
-          variant="ghost" 
-          size="sm"
-          className="text-muted-foreground hover:text-foreground"
-        >
-          Administración de Portal
-        </Button>
-      </div>
+      <Header showAdminAccess={true} />
       
       {user && (
         <div className="container mx-auto px-4 py-4">
@@ -35,10 +23,6 @@ const Index = () => {
             <div className="flex gap-2">
               <Button onClick={() => navigate('/dashboard')} variant="outline" size="sm">
                 Ir al Dashboard
-              </Button>
-              <Button onClick={handleSignOut} variant="ghost" size="sm">
-                <LogOut className="mr-2 h-4 w-4" />
-                Cerrar Sesión
               </Button>
             </div>
           </div>

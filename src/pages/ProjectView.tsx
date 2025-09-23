@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, FileText, Image, File, Building2 } from 'lucide-react'
+import { ArrowLeft, Download, FileText, Image, File } from 'lucide-react'
+import { Header } from '@/components/Header'
 
 type Project = {
   id: string
@@ -197,20 +198,14 @@ export default function ProjectView() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Portal de Clientes</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
+      
+      <div className="container mx-auto px-4 py-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver al Dashboard
+        </Button>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Upload, Trash2, Plus, Building2 } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { Header } from '@/components/Header'
 
 type Company = {
   id: string
@@ -404,25 +405,14 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
-              </Button>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                <h1 className="text-lg font-semibold">Panel Administrativo</h1>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => signOut()}>
-              Cerrar Sesión
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header onSignOut={() => signOut()} />
+      
+      <div className="container mx-auto px-4 py-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver al Portal
+        </Button>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="companies" className="w-full">

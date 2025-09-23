@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
+import { Header } from '@/components/Header'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -32,7 +33,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
+    <div className="min-h-screen bg-muted/50">
+      <Header showAdminAccess={true} />
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Portal de Clientes</CardTitle>
@@ -79,6 +82,7 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
