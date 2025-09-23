@@ -26,9 +26,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
       
-      if (error || !data) {
+      if (error) {
+        console.error('Error fetching user role:', error)
+        return { ...user, role: 'client' as const }
+      }
+      
+      if (!data) {
+        // User has no role assigned, default to client
         return { ...user, role: 'client' as const }
       }
       

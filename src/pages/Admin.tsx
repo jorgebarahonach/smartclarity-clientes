@@ -39,7 +39,7 @@ type Document = {
 }
 
 export default function Admin() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [companies, setCompanies] = useState<Company[]>([])
@@ -61,15 +61,25 @@ export default function Admin() {
   })
 
   useEffect(() => {
+    if (authLoading) return
+    
     if (!user) {
       navigate('/admin/login')
       return
     }
 
-    // Check if user is admin (you can implement your own logic here)
-    // For now, we'll allow any authenticated user to access admin
+    if (!isAdmin) {
+      toast({
+        variant: "destructive",
+        title: "Acceso Denegado",
+        description: "No tienes permisos de administrador para acceder a esta página.",
+      })
+      navigate('/')
+      return
+    }
+
     loadData()
-  }, [user, navigate])
+  }, [user, isAdmin, authLoading, navigate])
 
   const loadData = async () => {
     setLoading(true)
@@ -364,6 +374,18 @@ export default function Admin() {
         variant: "destructive",
       })
     }
+  }
+
+  // Show loading while checking authentication and permissions
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Verificando permisos...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
