@@ -66,6 +66,23 @@ export default function AdminLogin() {
     }
   }
 
+  const handleSetupSystem = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('setup-complete-system')
+      if (error) throw error
+      toast({ 
+        title: 'Sistema configurado', 
+        description: `Completado. Empresas procesadas: ${data?.results?.length || 0}` 
+      })
+    } catch (e: any) {
+      setError(e?.message || 'Error configurando el sistema')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
@@ -119,9 +136,9 @@ export default function AdminLogin() {
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Crear/Restablecer Admin inicial
               </Button>
-              <Button type="button" variant="secondary" className="w-full" disabled={loading} onClick={handleCreateClient}>
+              <Button type="button" variant="secondary" className="w-full" disabled={loading} onClick={handleSetupSystem}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Crear Usuario Cliente
+                Configurar Sistema Completo
               </Button>
             </div>
           </form>

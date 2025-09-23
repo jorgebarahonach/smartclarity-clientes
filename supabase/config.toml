@@ -2,3 +2,6 @@ project_id = "sutmmlryzosbasksamqw"
 
 [functions.bootstrap-admin]
 verify_jwt = false
+
+[functions.setup-complete-system]
+verify_jwt = false

@@ -245,20 +245,21 @@ export default function Admin() {
     }
 
     try {
-      // First try to create the user (in case they don't exist)
-      const { error: createError } = await supabase.functions.invoke('admin-create-user', {
+      // Try to create user first (handles both creation and password update)
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
         body: { email: companyEmail, password: newPassword }
       })
 
-      // If user already exists, try to update password
-      if (createError && createError.message?.includes('already')) {
-        const { error: updateError } = await supabase.functions.invoke('admin-update-password', {
-          body: { email: companyEmail, password: newPassword }
-        })
-        
-        if (updateError) throw updateError
-      } else if (createError) {
-        throw createError
+      if (error) {
+        // If user exists, try password update instead
+        if (error.message?.includes('already') || error.message?.includes('exists')) {
+          const { error: updateError } = await supabase.functions.invoke('admin-update-password', {
+            body: { email: companyEmail, password: newPassword }
+          })
+          if (updateError) throw updateError
+        } else {
+          throw error
+        }
       }
 
       toast({
@@ -268,11 +269,15 @@ export default function Admin() {
       
       setShowPasswordReset(null)
       setNewPassword('')
+      
+      // Refresh companies list to update status
+      await loadData()
+      
     } catch (error: any) {
-      console.error('Error resetting password:', error)
+      console.error('Error with user/password:', error)
       toast({
         title: "Error",
-        description: error?.message || "Error al cambiar la contraseña",
+        description: error?.message || "Error al procesar la solicitud",
         variant: "destructive",
       })
     }
@@ -588,7 +593,7 @@ export default function Admin() {
                       </div>
                       <div className="flex gap-2">
                         <Button onClick={() => handleResetPassword(showPasswordReset)}>
-                          Cambiar Contraseña
+                          Crear/Cambiar Contraseña
                         </Button>
                         <Button variant="outline" onClick={() => {
                           setShowPasswordReset(null)
