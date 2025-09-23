@@ -26,19 +26,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .maybeSingle()
       
       if (error) {
         console.error('Error fetching user role:', error)
         return { ...user, role: 'client' as const }
       }
       
-      if (!data) {
+      if (!data || data.length === 0) {
         // User has no role assigned, default to client
         return { ...user, role: 'client' as const }
       }
       
-      return { ...user, role: data.role as 'admin' | 'client' }
+      // If user has multiple roles, prefer admin
+      const roles = data.map(r => r.role)
+      const role = roles.includes('admin') ? 'admin' : roles[0]
+      
+      return { ...user, role: role as 'admin' | 'client' }
     } catch (error) {
       console.error('Error fetching user role:', error)
       return { ...user, role: 'client' as const }
