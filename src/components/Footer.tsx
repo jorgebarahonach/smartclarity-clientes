@@ -52,11 +52,22 @@ export function Footer() {
       
     } catch (error) {
       console.error('Error sending email:', error)
-      toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje. Intente nuevamente.",
-        variant: "destructive",
-      })
+      
+      // Check if it's a user/company not found error
+      const errorMessage = error?.message || ''
+      if (errorMessage.includes('not found') || errorMessage.includes('invalid') || errorMessage.includes('unauthorized')) {
+        toast({
+          title: "Empresa o correo no encontrado",
+          description: "La empresa y/o correo electrónico ingresados no están registrados en el Portal SmartClarity. Verifique los datos o contacte al administrador.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo enviar el mensaje. Intente nuevamente.",
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }
