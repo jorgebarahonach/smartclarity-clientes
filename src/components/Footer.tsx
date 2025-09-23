@@ -79,7 +79,11 @@ export function Footer() {
           <div className="text-right">
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                <Button variant="link" className="text-sm text-muted-foreground hover:text-foreground">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-8 bg-gray-500 border-gray-500 text-white hover:bg-white hover:text-gray-500"
+                >
                   No puedo acceder a mis documentos
                 </Button>
               </DialogTrigger>
