@@ -2,30 +2,64 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
+type UserWithRole = User & {
+  role?: 'admin' | 'client'
+}
+
 type AuthContextType = {
-  user: User | null
+  user: UserWithRole | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  isAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserWithRole | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const fetchUserRole = async (user: User) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (error || !data) {
+        return { ...user, role: 'client' as const }
+      }
+      
+      return { ...user, role: data.role as 'admin' | 'client' }
+    } catch (error) {
+      console.error('Error fetching user role:', error)
+      return { ...user, role: 'client' as const }
+    }
+  }
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const userWithRole = await fetchUserRole(session.user)
+        setUser(userWithRole)
+      } else {
+        setUser(null)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null)
+      async (_event, session) => {
+        if (session?.user) {
+          const userWithRole = await fetchUserRole(session.user)
+          setUser(userWithRole)
+        } else {
+          setUser(null)
+        }
         setLoading(false)
       }
     )
@@ -46,8 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error
   }
 
+  const isAdmin = user?.role === 'admin'
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

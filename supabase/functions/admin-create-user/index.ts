@@ -27,6 +27,20 @@ serve(async (req) => {
 
     if (error) throw error;
 
+    // Assign client role to the new user
+    if (data.user?.id) {
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({ 
+          user_id: data.user.id, 
+          role: 'client' 
+        });
+
+      if (roleError) {
+        console.error('Failed to assign client role:', roleError);
+      }
+    }
+
     return new Response(JSON.stringify({ user: data.user }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
