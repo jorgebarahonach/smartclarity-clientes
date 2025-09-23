@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
+// Login is now integrated into Index page;
 import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import Admin from "./pages/Admin";
@@ -23,7 +23,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            {/* Login is now integrated into Index page */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/project/:projectId" element={<ProjectView />} />
             <Route path="/admin" element={<Admin />} />

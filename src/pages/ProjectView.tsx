@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Download, FileText, Image, File } from 'lucide-react'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 
 type Project = {
   id: string
@@ -46,7 +48,9 @@ export default function ProjectView() {
   const navigate = useNavigate()
   const [project, setProject] = useState<Project | null>(null)
   const [documents, setDocuments] = useState<Document[]>([])
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState<'date' | 'name'>('date')
 
   useEffect(() => {
     if (!user || !projectId) {
@@ -87,6 +91,7 @@ export default function ProjectView() {
       }
 
       setDocuments(documentsData || [])
+      setFilteredDocuments(documentsData || [])
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -120,7 +125,22 @@ export default function ProjectView() {
   }
 
   const filterDocuments = (type: 'manual' | 'plano' | 'archivo') => {
-    return documents.filter(doc => doc.document_type === type)
+    const filtered = filteredDocuments.filter(doc => doc.document_type === type)
+    return sortDocuments(filtered)
+  }
+
+  const sortDocuments = (docs: Document[]) => {
+    return [...docs].sort((a, b) => {
+      if (sortBy === 'date') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      } else {
+        return a.name.localeCompare(b.name)
+      }
+    })
+  }
+
+  const handleSortChange = (value: 'date' | 'name') => {
+    setSortBy(value)
   }
 
   const DocumentList = ({ docs, type }: { docs: Document[], type: string }) => {
@@ -134,7 +154,7 @@ export default function ProjectView() {
     }
 
     return (
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {docs.map((doc) => {
           const IconComponent = getFileIcon(doc.file_type, doc.document_type)
           return (
@@ -156,6 +176,7 @@ export default function ProjectView() {
                     </div>
                   </div>
                   <Button 
+                    variant="action-green"
                     size="sm" 
                     onClick={() => handleDownload(doc)}
                     className="shrink-0"
@@ -197,22 +218,43 @@ export default function ProjectView() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header title="Portal de Clientes" variant="client" />
       
       <div className="container mx-auto px-4 py-2">
         <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver al Dashboard
+          Volver
         </Button>
       </div>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">{project.name}</h2>
+          <div className="flex items-center gap-4 mb-4">
+            <h2 className="text-3xl font-bold">{project.name}</h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+          </div>
           {project.description && (
             <p className="text-muted-foreground">{project.description}</p>
           )}
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Ordenar por:</span>
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Fecha</SelectItem>
+                <SelectItem value="name">Nombre</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Tabs defaultValue="archivos" className="w-full">
@@ -271,6 +313,8 @@ export default function ProjectView() {
           </TabsContent>
         </Tabs>
       </main>
+      
+      <Footer />
     </div>
   )
 }

@@ -7,9 +7,11 @@ import smartClarityLogo from '@/assets/smartclarity-logo.png'
 interface HeaderProps {
   showAdminAccess?: boolean
   onSignOut?: () => void
+  title?: string
+  variant?: 'public' | 'client' | 'admin'
 }
 
-export function Header({ showAdminAccess = false, onSignOut }: HeaderProps) {
+export function Header({ showAdminAccess = false, onSignOut, title, variant = 'public' }: HeaderProps) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -24,7 +26,7 @@ export function Header({ showAdminAccess = false, onSignOut }: HeaderProps) {
 
   return (
     <header className="border-b bg-card">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center h-16">
         <div className="flex items-center gap-3">
           <img 
             src={smartClarityLogo} 
@@ -32,23 +34,25 @@ export function Header({ showAdminAccess = false, onSignOut }: HeaderProps) {
             className="h-8 w-auto cursor-pointer"
             onClick={() => navigate('/')}
           />
-          <h1 className="text-lg font-semibold">Portal de Clientes</h1>
+          {title && (
+            <h1 className="text-lg font-semibold">{title}</h1>
+          )}
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 h-8">
           {showAdminAccess && (
             <Button 
               onClick={() => navigate('/admin/login')} 
-              variant="ghost" 
+              variant="admin-portal"
               size="sm"
-              className="text-muted-foreground hover:text-foreground"
+              className="h-8"
             >
               Administración de Portal
             </Button>
           )}
           
-          {user && (
-            <Button variant="outline" onClick={handleSignOut} size="sm">
+          {user && variant === 'client' && (
+            <Button variant="outline" onClick={handleSignOut} size="sm" className="h-8">
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar Sesión
             </Button>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { FolderOpen } from 'lucide-react'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 
 type Company = {
   id: string
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [company, setCompany] = useState<Company | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -72,6 +74,21 @@ export default function Dashboard() {
       }
 
       setProjects(projectsData || [])
+
+      // Get last document update date for this company
+      if (projectsData && projectsData.length > 0) {
+        const projectIds = projectsData.map(p => p.id)
+        const { data: documentsData } = await supabase
+          .from('documents')
+          .select('created_at')
+          .in('project_id', projectIds)
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        if (documentsData && documentsData.length > 0) {
+          setLastUpdateDate(new Date(documentsData[0].created_at).toLocaleDateString('es-ES'))
+        }
+      }
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -96,13 +113,22 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header onSignOut={handleSignOut} />
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header 
+        title="Portal de Clientes" 
+        variant="client" 
+        onSignOut={handleSignOut} 
+      />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Bienvenido, {company?.name}</h2>
           <p className="text-muted-foreground">Acceda a sus proyectos y documentos</p>
+          {lastUpdateDate && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Última actualización: {lastUpdateDate}
+            </p>
+          )}
         </div>
 
         {projects.length === 0 ? (
@@ -140,7 +166,7 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">
+                  <Button variant="action-green" size="sm" className="w-full">
                     Ver Documentos
                   </Button>
                 </CardContent>
@@ -149,6 +175,8 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+      
+      <Footer />
     </div>
   )
 }

@@ -36,6 +36,16 @@ All colors MUST be HSL.
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
+    /* Action button colors for hierarchy */
+    --action-green: 120 84% 45%;
+    --action-green-foreground: 0 0% 100%;
+    
+    --action-yellow: 48 96% 53%;
+    --action-yellow-foreground: 222.2 84% 4.9%;
+    
+    --action-red: 0 84% 60%;
+    --action-red-foreground: 0 0% 100%;
+
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;

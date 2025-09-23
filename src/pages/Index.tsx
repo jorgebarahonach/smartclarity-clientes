@@ -1,46 +1,54 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, LogOut } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import smartClarityLogo from '@/assets/smartclarity-logo.png'
 
 const Index = () => {
-  const { user } = useAuth()
+  const { user, signIn } = useAuth()
   const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      await signIn(email, password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError('Credenciales incorrectas. Verifique su email y contraseña.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    navigate('/dashboard')
+    return null
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex flex-col">
       <Header showAdminAccess={true} />
       
-      {user && (
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Sesión activa como: {user.email}</span>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/dashboard')} variant="outline" size="sm">
-                Ir al Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 flex-1">
         <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <img 
-              src={smartClarityLogo} 
-              alt="SmartClarity Logo" 
-              className="h-20 w-auto"
-            />
-          </div>
           <h1 className="text-4xl font-bold mb-4">Portal de Clientes</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Servicio para la gestión de documentos de clientes de Smartclariti.
+            Servicio para la gestión de documentos de clientes de SmartClarity.
           </p>
         </div>
 
@@ -53,14 +61,49 @@ const Index = () => {
                 Ingrese con sus credenciales para acceder a sus proyectos y documentos
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center">
-              <Button onClick={() => navigate('/login')} className="w-full">
-                Ingresar como Cliente
-              </Button>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Ingresar
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

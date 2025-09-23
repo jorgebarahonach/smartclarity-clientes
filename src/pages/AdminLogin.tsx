@@ -10,6 +10,7 @@ import { Loader2, Shield } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -85,9 +86,9 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/50">
-      <Header />
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+    <div className="min-h-screen bg-muted/50 flex flex-col">
+      <Header showAdminAccess={false} />
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 flex-1">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -146,8 +147,10 @@ export default function AdminLogin() {
             </div>
           </form>
         </CardContent>
-      </Card>
+        </Card>
       </div>
+      
+      <Footer />
     </div>
   )
 }
