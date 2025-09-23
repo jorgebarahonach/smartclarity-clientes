@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { email, password } = await req.json();
+    const { email, password, role = 'admin' } = await req.json();
 
     // Try to find existing user by email
     const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -35,24 +35,24 @@ serve(async (req) => {
       });
       if (updateError) throw updateError;
     } else {
-      // Create admin user in auth.users
+      // Create user in auth.users
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
       });
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create admin user');
+      if (!authData.user) throw new Error('Failed to create user');
       userId = authData.user.id;
     }
 
-    // Upsert admin role
+    // Upsert role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .upsert({
         user_id: userId!,
-        role: 'admin'
-      }, { onConflict: 'user_id' });
+        role: role
+      }, { onConflict: 'user_id,role' });
 
     if (roleError) {
       console.error('Error assigning admin role:', roleError);
@@ -61,7 +61,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: existingUser ? 'Admin password reset and role ensured' : 'Admin user created successfully'
+      message: existingUser ? `Usuario ${email} actualizado y rol ${role} asignado` : `Usuario ${email} creado con rol ${role}`
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -39,12 +39,28 @@ export default function AdminLogin() {
     setError('')
     try {
       const { error } = await supabase.functions.invoke('bootstrap-admin', {
-        body: { email, password },
+        body: { email, password, role: 'admin' },
       })
       if (error) throw error
       toast({ title: 'Admin listo', description: 'Ahora intenta iniciar sesión.' })
     } catch (e: any) {
       setError(e?.message || 'No se pudo crear/restablecer el admin')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateClient = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const { error } = await supabase.functions.invoke('bootstrap-admin', {
+        body: { email, password, role: 'client' },
+      })
+      if (error) throw error
+      toast({ title: 'Cliente creado', description: 'Usuario cliente creado exitosamente.' })
+    } catch (e: any) {
+      setError(e?.message || 'No se pudo crear el cliente')
     } finally {
       setLoading(false)
     }
@@ -102,6 +118,10 @@ export default function AdminLogin() {
               <Button type="button" variant="outline" className="w-full" disabled={loading} onClick={handleBootstrapAdmin}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Crear/Restablecer Admin inicial
+              </Button>
+              <Button type="button" variant="secondary" className="w-full" disabled={loading} onClick={handleCreateClient}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Crear Usuario Cliente
               </Button>
             </div>
           </form>
