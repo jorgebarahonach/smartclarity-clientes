@@ -58,7 +58,12 @@ export function Footer() {
       if (errorMessage.includes('not found') || errorMessage.includes('invalid') || errorMessage.includes('unauthorized') || errorMessage.includes('company') || errorMessage.includes('user')) {
         toast({
           title: "Empresa o correo no encontrado",
-          description: "La empresa y/o correo electrónico ingresados no están registrados en el Portal SmartClarity. Verifique los datos o contacte al administrador.",
+          description: (
+            <span>
+              No encontramos su Empresa y/o correo electrónico. Es posible que no existan en el Portal. Por favor comuníquese al{' '}
+              <a href="tel:+56996820893" className="underline font-medium">+56-9-9682 0893</a>{' '}para recibir asistencia.
+            </span>
+          ),
           variant: "destructive",
         })
       } else {
