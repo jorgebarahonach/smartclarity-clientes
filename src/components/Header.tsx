@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
-import smartClarityLogo from '@/assets/smartclarity-logo.png'
+import smartClarityLogo from '@/assets/smartclarity-logo-new.png'
 
 interface HeaderProps {
   showAdminAccess?: boolean
@@ -31,7 +31,7 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
           <img 
             src={smartClarityLogo} 
             alt="SmartClarity Logo" 
-            className="h-8 w-auto cursor-pointer"
+            className="w-[250px] h-auto cursor-pointer"
             onClick={() => navigate('/')}
           />
           {title && (
