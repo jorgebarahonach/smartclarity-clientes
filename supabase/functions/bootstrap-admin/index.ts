@@ -19,26 +19,40 @@ serve(async (req) => {
 
     const { email, password } = await req.json();
 
-    // Create admin user in auth.users
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
+    // Try to find existing user by email
+    const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) throw listError;
 
-    if (authError) throw authError;
+    const existingUser = usersList.users.find((u) => u.email?.toLowerCase() === String(email).toLowerCase());
 
-    if (!authData.user) {
-      throw new Error('Failed to create admin user');
+    let userId: string | null = null;
+
+    if (existingUser) {
+      userId = existingUser.id;
+      // Update password for existing user
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password,
+      });
+      if (updateError) throw updateError;
+    } else {
+      // Create admin user in auth.users
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create admin user');
+      userId = authData.user.id;
     }
 
-    // Assign admin role
+    // Upsert admin role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
+      .upsert({
+        user_id: userId!,
         role: 'admin'
-      });
+      }, { onConflict: 'user_id' });
 
     if (roleError) {
       console.error('Error assigning admin role:', roleError);
@@ -46,9 +60,8 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      success: true, 
-      user: authData.user,
-      message: 'Admin user created successfully'
+      success: true,
+      message: existingUser ? 'Admin password reset and role ensured' : 'Admin user created successfully'
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
