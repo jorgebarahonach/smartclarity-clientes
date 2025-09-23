@@ -45,7 +45,7 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
               onClick={() => navigate('/admin/login')} 
               variant="outline"
               size="sm"
-              className="h-8 bg-white border-black text-black hover:bg-gray-50"
+              className="h-8 bg-white border-black text-black hover:bg-gray-50 opacity-50"
             >
               Administración de Portal
             </Button>
