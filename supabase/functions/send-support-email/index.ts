@@ -26,13 +26,23 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const apiKey = Deno.env.get("RESEND_API_KEY");
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ success: false, code: "email_provider_missing_api_key", friendlyMessage: "Email service not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
     const { to, subject, company, fullName, email, phone, problem }: SupportEmailRequest = await req.json();
+
+    const fromAddress = Deno.env.get("RESEND_FROM") ?? "Lovable <onboarding@resend.dev>";
 
     // Send email to support
     const supportEmailResponse = await resend.emails.send({
-      from: "SmartClarity Portal <noreply@smartclarity.com>",
+      from: fromAddress,
       to: [to],
-      subject: subject,
+      subject,
       html: `
         <h2>Nuevo Problema de Acceso - Portal SmartClarity</h2>
         <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -54,11 +64,9 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Support email sent successfully:", supportEmailResponse);
-
     // Send confirmation email to user
     const confirmationEmailResponse = await resend.emails.send({
-      from: "SmartClarity Portal <noreply@smartclarity.com>",
+      from: fromAddress,
       to: [email],
       subject: "Hemos recibido su consulta - Portal SmartClarity",
       html: `
@@ -83,27 +91,31 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Confirmation email sent successfully:", confirmationEmailResponse);
+    const providerErrors = [supportEmailResponse?.error, confirmationEmailResponse?.error].filter(Boolean);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      supportEmail: supportEmailResponse,
-      confirmationEmail: confirmationEmailResponse 
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
+    if (providerErrors.length) {
+      console.error("Resend provider error", providerErrors);
+      const invalidKey = providerErrors.some((e: any) => `${e?.message || e?.name}`.toLowerCase().includes("api key"));
+      return new Response(
+        JSON.stringify({
+          success: false,
+          code: invalidKey ? "email_provider_invalid_api_key" : "email_provider_error",
+          providerErrors,
+          friendlyMessage: "Email provider error",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+    );
   } catch (error: any) {
     console.error("Error in send-support-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: false, code: "unexpected_error", error: error?.message, friendlyMessage: "Unexpected error" }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
     );
   }
 };

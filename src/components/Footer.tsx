@@ -28,7 +28,7 @@ export function Footer() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.functions.invoke('send-support-email', {
+      const { data, error } = await supabase.functions.invoke('send-support-email', {
         body: {
           to: 'jorgebarahona@proton.me',
           subject: 'Problema de acceso a documentos - SmartClarity Portal',
@@ -40,7 +40,7 @@ export function Footer() {
         }
       })
 
-      if (error) throw error
+      if (error || !data?.success) throw new Error((data as any)?.friendlyMessage || (error as any)?.message || 'unknown')
 
       setShowSuccess(true)
       setForm({ company: '', fullName: '', email: '', phone: '', problem: '' })
