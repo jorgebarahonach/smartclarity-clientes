@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import smartClarityLogo from '@/assets/smartclarity-logo.png'
+import smartClarityLogoBlack from '@/assets/smartclarity-logo-black.png'
 
 export function Footer() {
   const [isOpen, setIsOpen] = useState(false)
@@ -69,9 +70,9 @@ export function Footer() {
         <div className="flex justify-between items-end">
           <div>
             <img 
-              src={smartClarityLogo} 
+              src={smartClarityLogoBlack} 
               alt="SmartClarity Logo"
-              className="w-48 h-auto"
+              className="w-[200px] h-auto opacity-50"
             />
           </div>
           
