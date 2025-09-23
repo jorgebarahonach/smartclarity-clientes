@@ -245,25 +245,34 @@ export default function Admin() {
     }
 
     try {
-      // Update password via edge function
-      const { error } = await supabase.functions.invoke('admin-update-password', {
+      // First try to create the user (in case they don't exist)
+      const { error: createError } = await supabase.functions.invoke('admin-create-user', {
         body: { email: companyEmail, password: newPassword }
       })
 
-      if (error) throw error
+      // If user already exists, try to update password
+      if (createError && createError.message?.includes('already')) {
+        const { error: updateError } = await supabase.functions.invoke('admin-update-password', {
+          body: { email: companyEmail, password: newPassword }
+        })
+        
+        if (updateError) throw updateError
+      } else if (createError) {
+        throw createError
+      }
 
       toast({
         title: "Éxito",
-        description: "Contraseña actualizada correctamente",
+        description: "Usuario creado/contraseña actualizada correctamente",
       })
       
       setShowPasswordReset(null)
       setNewPassword('')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resetting password:', error)
       toast({
         title: "Error",
-        description: "Error al cambiar la contraseña",
+        description: error?.message || "Error al cambiar la contraseña",
         variant: "destructive",
       })
     }
