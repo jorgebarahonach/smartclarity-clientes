@@ -68,8 +68,13 @@ export function Footer() {
         })
       } else {
         toast({
-          title: "Error",
-          description: "No se pudo enviar el mensaje. Intente nuevamente.",
+          title: "Empresa o correo no encontrado",
+          description: (
+            <span>
+              No encontramos su Empresa y/o correo electrónico. Es posible que no existan en el Portal. Por favor comuníquese al{' '}
+              <a href="tel:+56996820893" className="underline font-medium">+56-9-9682 0893</a>{' '}para recibir asistencia.
+            </span>
+          ),
           variant: "destructive",
         })
       }
