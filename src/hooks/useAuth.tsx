@@ -49,14 +49,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    console.log('useAuth: Starting auth initialization')
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('useAuth: Session data:', session?.user?.email || 'No session')
       if (session?.user) {
+        console.log('useAuth: Fetching user role for:', session.user.email)
         const userWithRole = await fetchUserRole(session.user)
+        console.log('useAuth: User with role:', userWithRole.email, userWithRole.role)
         setUser(userWithRole)
       } else {
+        console.log('useAuth: No session found')
         setUser(null)
       }
+      console.log('useAuth: Setting loading to false')
+      setLoading(false)
+    }).catch(error => {
+      console.error('useAuth: Error getting session:', error)
       setLoading(false)
     })
 

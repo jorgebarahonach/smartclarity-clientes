@@ -21,10 +21,14 @@ const Index = () => {
 
   // Handle redirect based on user role
   useEffect(() => {
+    console.log('Index: useEffect triggered - user:', user?.email || 'null', 'authLoading:', authLoading, 'isAdmin:', isAdmin)
     if (user && !authLoading) {
+      console.log('Index: User authenticated, redirecting...')
       if (isAdmin) {
+        console.log('Index: Redirecting to /admin')
         navigate('/admin')
       } else {
+        console.log('Index: Redirecting to /dashboard')
         navigate('/dashboard')
       }
     }
