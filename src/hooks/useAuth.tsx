@@ -94,8 +94,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      // Clear user state immediately
+      setUser(null)
+      setLoading(false)
+      
+      // Attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      
+      // Even if there's an error, we've already cleared the local state
+      if (error) {
+        console.warn('Sign out warning (user cleared anyway):', error)
+      }
+    } catch (error) {
+      console.warn('Sign out error (user cleared anyway):', error)
+    }
   }
 
   const isAdmin = user?.role === 'admin'
