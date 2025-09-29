@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import AdminPasswordReset from "./pages/AdminPasswordReset";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/project/:projectId" element={<ProjectView />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/reset-password" element={<AdminPasswordReset />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
