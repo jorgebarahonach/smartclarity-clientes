@@ -230,11 +230,16 @@ export default function ProjectView() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <IconComponent className="h-8 w-8 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="text-sm font-medium leading-tight break-words">
-                            {doc.name}
-                          </CardTitle>
-                        </div>
+                         <div className="min-w-0 flex-1">
+                           <CardTitle className="text-sm font-medium leading-tight break-words">
+                             {doc.name}
+                           </CardTitle>
+                           {doc.original_file_name && doc.original_file_name !== doc.name && (
+                             <p className="text-xs text-muted-foreground mt-1">
+                               📎 {doc.original_file_name}
+                             </p>
+                           )}
+                         </div>
                       </div>
                     </div>
                   </CardHeader>

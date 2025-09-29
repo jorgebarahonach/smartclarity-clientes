@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -902,19 +902,24 @@ export default function Admin() {
                                     <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
                                   ) : (
                                     <div className="space-y-2">
-                                      {projectDocuments.map((doc) => (
-                                         <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                           <div>
-                                             <p className="font-medium text-sm">{doc.name}</p>
-                                             {doc.original_file_name && doc.original_file_name !== doc.name && (
-                                               <p className="text-xs text-muted-foreground">
-                                                 Archivo original: {doc.original_file_name}
-                                               </p>
-                                             )}
-                                             <p className="text-xs text-muted-foreground">
-                                               Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
-                                             </p>
-                                           </div>
+                                       {projectDocuments.map((doc) => (
+                                          <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <p className="font-medium text-sm">{doc.name}</p>
+                                                {doc.original_file_name && doc.original_file_name !== doc.name && (
+                                                  <FileText className="h-3 w-3 text-muted-foreground" />
+                                                )}
+                                              </div>
+                                              {doc.original_file_name && doc.original_file_name !== doc.name && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                  📎 {doc.original_file_name}
+                                                </p>
+                                              )}
+                                              <p className="text-xs text-muted-foreground">
+                                                Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
+                                              </p>
+                                            </div>
                                           <Button
                                             variant="action-red"
                                             size="sm"
