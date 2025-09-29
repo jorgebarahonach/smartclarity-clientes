@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -17,9 +17,16 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { signIn, user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+
+  // Si ya está autenticado como admin, redirigir automáticamente
+  useEffect(() => {
+    if (!authLoading && user && isAdmin) {
+      navigate('/admin')
+    }
+  }, [authLoading, user, isAdmin, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +35,7 @@ export default function AdminLogin() {
 
     try {
       await signIn(email, password)
-      navigate('/admin')
+      // Redirigimos cuando la sesión esté lista desde el listener de auth
     } catch (err) {
       setError('Credenciales incorrectas. Verifique su email y contraseña.')
       // No limpiar los campos en caso de error para mantener los valores
