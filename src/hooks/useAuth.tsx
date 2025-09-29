@@ -69,18 +69,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     })
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          const userWithRole = await fetchUserRole(session.user)
-          setUser(userWithRole)
-        } else {
-          setUser(null)
-        }
+    // Listen for auth changes (sync callback; defer role fetch)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('useAuth: onAuthStateChange', event, session?.user?.email || 'No session')
+      if (session?.user) {
+        setTimeout(async () => {
+          try {
+            const userWithRole = await fetchUserRole(session.user!)
+            setUser(userWithRole)
+          } catch (e) {
+            console.error('useAuth: role fetch error (listener):', e)
+          } finally {
+            setLoading(false)
+          }
+        }, 0)
+      } else {
+        setUser(null)
         setLoading(false)
       }
-    )
+    })
 
     return () => subscription.unsubscribe()
   }, [])
