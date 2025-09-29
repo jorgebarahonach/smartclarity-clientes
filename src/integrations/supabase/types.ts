@@ -20,21 +20,18 @@ export type Database = {
           email: string
           id: string
           name: string
-          password_temp: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           id?: string
           name: string
-          password_temp?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
           name?: string
-          password_temp?: string | null
         }
         Relationships: []
       }
@@ -138,7 +135,7 @@ export type Database = {
     }
     Functions: {
       create_company_auth_user: {
-        Args: { company_email: string; temp_password: string }
+        Args: { company_email: string }
         Returns: string
       }
       get_current_user_role: {
