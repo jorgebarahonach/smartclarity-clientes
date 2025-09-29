@@ -1,8 +1,23 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
+// Removed npm:resend import due to build environment; using direct HTTP call
+const resend = {
+  emails: {
+    send: async ({ from, to, subject, html }: { from: string; to: string[]; subject: string; html: string; }) => {
+      const apiKey = Deno.env.get("RESEND_API_KEY");
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ from, to, subject, html }),
+      });
+      const body = await res.json().catch(() => null);
+      if (res.ok) return { data: body } as any;
+      return { error: body || { status: res.status } } as any;
+    }
+  }
+};
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
