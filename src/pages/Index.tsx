@@ -124,16 +124,6 @@ const Index = () => {
                   Ingresar
                 </Button>
                 
-                <div className="text-center mt-4">
-                  <Button 
-                    type="button" 
-                    variant="link" 
-                    className="text-sm text-muted-foreground"
-                    onClick={() => navigate('/admin/reset-password')}
-                  >
-                    ¿Problemas con tu contraseña de admin? Resetear aquí
-                  </Button>
-                </div>
               </form>
             </CardContent>
           </Card>

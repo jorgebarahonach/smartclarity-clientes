@@ -145,6 +145,17 @@ export default function AdminLogin() {
                 Configurar Sistema Completo
               </Button>
             </div>
+            <div className="text-center mt-2">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm text-muted-foreground"
+                onClick={() => navigate('/admin/reset-password')}
+                disabled={loading}
+              >
+                ¿Olvidaste tu contraseña de admin? Restablecer aquí
+              </Button>
+            </div>
           </form>
         </CardContent>
         </Card>
