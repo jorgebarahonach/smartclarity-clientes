@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,12 +12,23 @@ import { Footer } from '@/components/Footer'
 import smartClarityLogo from '@/assets/smartclarity-logo.png'
 
 const Index = () => {
-  const { user, signIn } = useAuth()
+  const { user, signIn, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Handle redirect based on user role
+  useEffect(() => {
+    if (user && !authLoading) {
+      if (isAdmin) {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
+    }
+  }, [user, isAdmin, authLoading, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +37,7 @@ const Index = () => {
 
     try {
       await signIn(email, password)
-      navigate('/dashboard')
+      // Let the useEffect handle the redirect based on user role
     } catch (err) {
       setError('Credenciales incorrectas. Verifique su email y contraseña.')
     } finally {
@@ -34,9 +45,20 @@ const Index = () => {
     }
   }
 
-  // If user is already logged in, redirect to dashboard
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If user is already logged in, the useEffect will handle the redirect
   if (user) {
-    navigate('/dashboard')
     return null
   }
 
