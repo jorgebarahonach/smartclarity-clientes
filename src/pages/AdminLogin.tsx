@@ -31,6 +31,7 @@ export default function AdminLogin() {
       navigate('/admin')
     } catch (err) {
       setError('Credenciales incorrectas. Verifique su email y contraseña.')
+      // No limpiar los campos en caso de error para mantener los valores
     } finally {
       setLoading(false)
     }
