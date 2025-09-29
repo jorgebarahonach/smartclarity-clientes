@@ -62,6 +62,7 @@ export default function Admin() {
   const [uploadForm, setUploadForm] = useState({
     project_id: '',
     document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'otro',
+    document_name: '',
     file: null as File | null
   })
 
@@ -371,7 +372,7 @@ export default function Admin() {
         .from('documents')
         .insert([{
           project_id: uploadForm.project_id,
-          name: uploadForm.file.name,
+          name: uploadForm.document_name || uploadForm.file.name,
           file_path: filePath,
           file_type: uploadForm.file.type || 'application/octet-stream',
           file_size: uploadForm.file.size,
@@ -385,7 +386,7 @@ export default function Admin() {
         description: "Documento subido correctamente",
       })
       
-      setUploadForm({ project_id: '', document_type: 'archivo', file: null })
+      setUploadForm({ project_id: '', document_type: 'archivo', document_name: '', file: null })
       loadData()
     } catch (error) {
       console.error('Error uploading file:', error)
@@ -830,6 +831,20 @@ export default function Admin() {
                         file: e.target.files?.[0] || null 
                       }))}
                       required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="document_name">Nombre del Documento/Apodo</Label>
+                    <Input
+                      id="document_name"
+                      type="text"
+                      value={uploadForm.document_name}
+                      onChange={(e) => setUploadForm(prev => ({ 
+                        ...prev, 
+                        document_name: e.target.value 
+                      }))}
+                      placeholder="Nombre personalizado para el documento (opcional)"
                     />
                   </div>
 
