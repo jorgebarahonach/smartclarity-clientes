@@ -15,6 +15,7 @@ import { Footer } from '@/components/Footer'
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
@@ -41,7 +42,7 @@ export default function AdminLogin() {
     setError('')
     try {
       const { error } = await supabase.functions.invoke('bootstrap-admin', {
-        body: { email, password, role: 'admin' },
+        body: { email, password, name: name || 'Admin', role: 'admin' },
       })
       if (error) throw error
       toast({ title: 'Admin listo', description: 'Ahora intenta iniciar sesión.' })
@@ -57,7 +58,7 @@ export default function AdminLogin() {
     setError('')
     try {
       const { error } = await supabase.functions.invoke('bootstrap-admin', {
-        body: { email, password, role: 'client' },
+        body: { email, password, name: name || 'Cliente', role: 'client' },
       })
       if (error) throw error
       toast({ title: 'Cliente creado', description: 'Usuario cliente creado exitosamente.' })
@@ -107,6 +108,18 @@ export default function AdminLogin() {
               </Alert>
             )}
             
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre/Apodo</Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre de usuario o apodo"
+                disabled={loading}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
