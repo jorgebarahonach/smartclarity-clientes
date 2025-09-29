@@ -907,15 +907,11 @@ export default function Admin() {
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2">
                                                 <p className="font-medium text-sm">{doc.name}</p>
-                                                {doc.original_file_name && doc.original_file_name !== doc.name && (
-                                                  <FileText className="h-3 w-3 text-muted-foreground" />
-                                                )}
+                                                <FileText className="h-3 w-3 text-muted-foreground" />
                                               </div>
-                                              {doc.original_file_name && doc.original_file_name !== doc.name && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                  📎 {doc.original_file_name}
-                                                </p>
-                                              )}
+                                              <p className="text-xs text-muted-foreground mt-1">
+                                                📎 Archivo original: {doc.original_file_name || doc.name}
+                                              </p>
                                               <p className="text-xs text-muted-foreground">
                                                 Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
                                               </p>

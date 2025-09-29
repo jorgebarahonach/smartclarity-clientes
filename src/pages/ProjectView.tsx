@@ -234,11 +234,9 @@ export default function ProjectView() {
                            <CardTitle className="text-sm font-medium leading-tight break-words">
                              {doc.name}
                            </CardTitle>
-                           {doc.original_file_name && doc.original_file_name !== doc.name && (
-                             <p className="text-xs text-muted-foreground mt-1">
-                               📎 {doc.original_file_name}
-                             </p>
-                           )}
+                           <p className="text-xs text-muted-foreground mt-1">
+                             📎 Archivo original: {doc.original_file_name || doc.name}
+                           </p>
                          </div>
                       </div>
                     </div>
