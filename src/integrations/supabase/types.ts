@@ -44,6 +44,7 @@ export type Database = {
           file_type: string
           id: string
           name: string
+          original_file_name: string | null
           project_id: string
         }
         Insert: {
@@ -54,6 +55,7 @@ export type Database = {
           file_type: string
           id?: string
           name: string
+          original_file_name?: string | null
           project_id: string
         }
         Update: {
@@ -64,6 +66,7 @@ export type Database = {
           file_type?: string
           id?: string
           name?: string
+          original_file_name?: string | null
           project_id?: string
         }
         Relationships: [

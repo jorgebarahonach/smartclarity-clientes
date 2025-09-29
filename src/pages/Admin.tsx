@@ -33,6 +33,7 @@ type Document = {
   id: string
   project_id: string
   name: string
+  original_file_name?: string
   file_path: string
   file_type: string
   file_size: number
@@ -373,6 +374,7 @@ export default function Admin() {
         .insert([{
           project_id: uploadForm.project_id,
           name: uploadForm.document_name || uploadForm.file.name,
+          original_file_name: uploadForm.file.name,
           file_path: filePath,
           file_type: uploadForm.file.type || 'application/octet-stream',
           file_size: uploadForm.file.size,
@@ -901,13 +903,18 @@ export default function Admin() {
                                   ) : (
                                     <div className="space-y-2">
                                       {projectDocuments.map((doc) => (
-                                        <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                          <div>
-                                            <p className="font-medium text-sm">{doc.name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                              Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
-                                            </p>
-                                          </div>
+                                         <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                           <div>
+                                             <p className="font-medium text-sm">{doc.name}</p>
+                                             {doc.original_file_name && doc.original_file_name !== doc.name && (
+                                               <p className="text-xs text-muted-foreground">
+                                                 Archivo original: {doc.original_file_name}
+                                               </p>
+                                             )}
+                                             <p className="text-xs text-muted-foreground">
+                                               Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
+                                             </p>
+                                           </div>
                                           <Button
                                             variant="action-red"
                                             size="sm"
