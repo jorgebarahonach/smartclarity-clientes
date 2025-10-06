@@ -66,6 +66,7 @@ export default function Admin() {
   const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
   const [newProject, setNewProject] = useState({ name: '', description: '', company_id: '' })
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [showNewCompanyForm, setShowNewCompanyForm] = useState(false)
@@ -349,6 +350,40 @@ export default function Admin() {
       toast({
         title: "Error",
         description: "Error al crear el proyecto",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateProject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingProject) return
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          name: editingProject.name, 
+          description: editingProject.description,
+          company_id: editingProject.company_id 
+        })
+        .eq('id', editingProject.id)
+
+      if (error) throw error
+
+      toast({
+        variant: "success",
+        title: "Éxito",
+        description: "Proyecto actualizado correctamente",
+      })
+      
+      setEditingProject(null)
+      loadData()
+    } catch (error) {
+      console.error('Error updating project:', error)
+      toast({
+        title: "Error",
+        description: "Error al actualizar el proyecto",
         variant: "destructive",
       })
     }
@@ -814,7 +849,7 @@ export default function Admin() {
                               <div className="flex items-center gap-2">
                                 <button
                                   className="p-1.5 rounded hover:bg-muted"
-                                  onClick={() => {/* TODO: Add edit functionality */}}
+                                  onClick={() => setEditingProject(project)}
                                 >
                                   <Edit className="h-4 w-4 text-[hsl(var(--action-green))]" />
                                 </button>
@@ -826,6 +861,64 @@ export default function Admin() {
                                 </button>
                               </div>
                             </div>
+
+                            {/* Edit Project Form - appears below the project card */}
+                            {editingProject && editingProject.id === project.id && (
+                              <Card className="mt-2 ml-4 border-2">
+                                <CardHeader>
+                                  <CardTitle>Editar Proyecto</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <form onSubmit={handleUpdateProject} className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editProjectName">Nombre del Proyecto</Label>
+                                        <Input
+                                          id="editProjectName"
+                                          value={editingProject.name}
+                                          onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editProjectCompany">Empresa</Label>
+                                        <Select 
+                                          value={editingProject.company_id} 
+                                          onValueChange={(value) => setEditingProject(prev => prev ? ({ ...prev, company_id: value }) : null)}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar empresa" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {companies.map((company) => (
+                                              <SelectItem key={company.id} value={company.id}>
+                                                {company.name}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editProjectDescription">Descripción</Label>
+                                      <Input
+                                        id="editProjectDescription"
+                                        value={editingProject.description || ''}
+                                        onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
+                                      />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button type="submit" variant="action-green">
+                                        Actualizar Proyecto
+                                      </Button>
+                                      <Button type="button" variant="outline" onClick={() => setEditingProject(null)}>
+                                        Cancelar
+                                      </Button>
+                                    </div>
+                                  </form>
+                                </CardContent>
+                              </Card>
+                            )}
                           </Card>
                         ))
                       )}
