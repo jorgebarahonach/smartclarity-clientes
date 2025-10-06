@@ -54,6 +54,12 @@ type Document = {
   projects?: { name: string }
 }
 
+type AdminUser = {
+  id: string
+  email: string
+  created_at: string
+}
+
 export default function Admin() {
   const { user, signOut, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -61,6 +67,7 @@ export default function Admin() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
+  const [admins, setAdmins] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
   const [uploadLoading, setUploadLoading] = useState(false)
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
@@ -69,12 +76,14 @@ export default function Admin() {
   // Form states
   const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
   const [newProject, setNewProject] = useState({ name: '', description: '', company_id: '' })
+  const [newAdmin, setNewAdmin] = useState({ email: '', password: '' })
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [showNewCompanyForm, setShowNewCompanyForm] = useState(false)
   const [showNewProjectForm, setShowNewProjectForm] = useState(false)
+  const [showNewAdminForm, setShowNewAdminForm] = useState(false)
   const [uploadForm, setUploadForm] = useState({
     project_id: '',
     document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro',
@@ -131,9 +140,30 @@ export default function Admin() {
         .select('*, projects(name)')
         .order('created_at', { ascending: false })
 
+      // Load admin users
+      const { data: adminRolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, created_at')
+        .eq('role', 'admin')
+
+      // Get user emails from admin-get-current-user function
+      const adminUsersPromises = (adminRolesData || []).map(async (role) => {
+        const { data: userData } = await supabase.functions.invoke('admin-get-current-user', {
+          body: { userId: role.user_id }
+        })
+        return {
+          id: role.user_id,
+          email: userData?.email || 'Email no disponible',
+          created_at: role.created_at
+        }
+      })
+
+      const adminUsers = await Promise.all(adminUsersPromises)
+
       setCompanies(companiesData || [])
       setProjects(projectsData || [])
       setDocuments(documentsData || [])
+      setAdmins(adminUsers || [])
     } catch (error) {
       console.error('Error loading data:', error)
       toast({
@@ -512,6 +542,62 @@ export default function Admin() {
     }
   }
 
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const { error } = await supabase.functions.invoke('bootstrap-admin', {
+        body: { 
+          email: newAdmin.email, 
+          password: newAdmin.password,
+          role: 'admin'
+        }
+      })
+
+      if (error) throw error
+
+      toast({
+        variant: "success",
+        title: "Éxito",
+        description: "Administrador creado correctamente",
+      })
+      
+      setNewAdmin({ email: '', password: '' })
+      setShowNewAdminForm(false)
+      loadData()
+    } catch (error) {
+      console.error('Error creating admin:', error)
+      toast({
+        title: "Error",
+        description: "Error al crear el administrador",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleDeleteAdmin = async (adminEmail: string) => {
+    try {
+      // Delete user via edge function
+      await supabase.functions.invoke('admin-delete-user', {
+        body: { email: adminEmail }
+      })
+
+      toast({
+        variant: "success",
+        title: "Éxito",
+        description: `Administrador ${adminEmail} eliminado`,
+      })
+      
+      loadData()
+    } catch (error) {
+      console.error('Error deleting admin:', error)
+      toast({
+        title: "Error",
+        description: "Error al eliminar el administrador",
+        variant: "destructive",
+      })
+    }
+  }
+
   // Group projects by company
   const projectsByCompany = companies.map(company => ({
     ...company,
@@ -573,13 +659,119 @@ export default function Admin() {
       <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs defaultValue="companies" className="w-full">
           <div className="flex items-center justify-between mb-6">
-            <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsList className="grid w-full max-w-3xl grid-cols-5">
+              <TabsTrigger value="admins">Administradores</TabsTrigger>
               <TabsTrigger value="companies">Empresas</TabsTrigger>
               <TabsTrigger value="projects">Proyectos</TabsTrigger>
               <TabsTrigger value="upload">Subir Documentos</TabsTrigger>
               <TabsTrigger value="documents">Gestionar Documentos</TabsTrigger>
             </TabsList>
           </div>
+
+          <TabsContent value="admins" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex justify-end">
+                <Button 
+                  variant="default" 
+                  onClick={() => setShowNewAdminForm(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nuevo administrador
+                </Button>
+              </div>
+
+              {showNewAdminForm && (
+                <Card className="border-2">
+                  <CardHeader>
+                    <CardTitle>Crear Administrador</CardTitle>
+                    <CardDescription>
+                      Crear un nuevo usuario con permisos de administrador
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleCreateAdmin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="adminEmail">Email</Label>
+                        <Input
+                          id="adminEmail"
+                          type="email"
+                          value={newAdmin.email}
+                          onChange={(e) => setNewAdmin(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="juanjose.decomba@smartclarity.com"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="adminPassword">Contraseña Inicial</Label>
+                        <Input
+                          id="adminPassword"
+                          type="password"
+                          value={newAdmin.password}
+                          onChange={(e) => setNewAdmin(prev => ({ ...prev, password: e.target.value }))}
+                          required
+                          placeholder="Mínimo 6 caracteres"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" variant="action-green">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Crear Administrador
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setShowNewAdminForm(false)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid grid-cols-3 gap-4">
+                {admins.map((admin) => (
+                  <Card key={admin.id}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="default">Administrador</Badge>
+                          </div>
+                          <p className="font-medium">{admin.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Creado: {new Date(admin.created_at).toLocaleDateString('es-ES')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {admin.email !== user?.email && (
+                            <button
+                              className="p-1.5 rounded hover:bg-muted"
+                              onClick={() => {
+                                if (window.confirm(`¿Eliminar administrador ${admin.email}?`)) {
+                                  handleDeleteAdmin(admin.email)
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                            </button>
+                          )}
+                          {admin.email === user?.email && (
+                            <span className="text-xs text-muted-foreground">(Usted)</span>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {admins.length === 0 && (
+                <Alert>
+                  <AlertDescription>
+                    No hay administradores registrados en el sistema.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </TabsContent>
 
           <TabsContent value="companies" className="mt-6">
             <div className="space-y-6">
