@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
@@ -21,7 +22,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -1046,51 +1047,67 @@ export default function Admin() {
                       ) : (
                         company.projects.map((project) => {
                           const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                          const [isOpen, setIsOpen] = useState(true)
+                          
                           return (
-                            <Card key={project.id} className="p-4">
-                              <div className="mb-3">
-                                <h4 className="font-medium">{project.name}</h4>
-                                {project.description && (
-                                  <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                                )}
-                              </div>
-                              <div>
-                                {projectDocuments.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                                ) : (
-                                  <div className="space-y-2">
-                                    {projectDocuments.map((doc) => {
-                                      const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                          doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
-                                      return (
-                                        <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                          <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                              <FileText className="h-4 w-4 text-muted-foreground" />
-                                              <p className="font-medium text-sm">{doc.name}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-2">
-                                              <Badge variant="secondary" className="text-xs">
-                                                {doc.document_type}
-                                              </Badge>
-                                              <Badge variant="outline" className="text-xs">
-                                                .{fileExtension}
-                                              </Badge>
-                                            </div>
-                                          </div>
-                                          <button
-                                            className="p-1.5 rounded hover:bg-muted"
-                                            onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
-                                          >
-                                            <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                          </button>
-                                        </div>
-                                      )
-                                    })}
+                            <Collapsible key={project.id} open={isOpen} onOpenChange={setIsOpen}>
+                              <Card className="p-4">
+                                <CollapsibleTrigger className="w-full">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-left flex-1">
+                                      <h4 className="font-medium">{project.name}</h4>
+                                      {project.description && (
+                                        <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                      )}
+                                    </div>
+                                    <ChevronDown 
+                                      className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                        isOpen ? 'rotate-180' : ''
+                                      }`}
+                                    />
                                   </div>
-                                )}
-                              </div>
-                            </Card>
+                                </CollapsibleTrigger>
+                                
+                                <CollapsibleContent>
+                                  <div>
+                                    {projectDocuments.length === 0 ? (
+                                      <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        {projectDocuments.map((doc) => {
+                                          const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                              doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                          return (
+                                            <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                              <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                                  <p className="font-medium text-sm">{doc.name}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                  <Badge variant="secondary" className="text-xs">
+                                                    {doc.document_type}
+                                                  </Badge>
+                                                  <Badge variant="outline" className="text-xs">
+                                                    .{fileExtension}
+                                                  </Badge>
+                                                </div>
+                                              </div>
+                                              <button
+                                                className="p-1.5 rounded hover:bg-muted"
+                                                onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                              >
+                                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                              </button>
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                </CollapsibleContent>
+                              </Card>
+                            </Collapsible>
                           )
                         })
                       )}
