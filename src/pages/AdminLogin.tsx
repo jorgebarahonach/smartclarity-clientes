@@ -43,7 +43,7 @@ export default function AdminLogin() {
           body: { email, password, role: 'admin' },
         })
         if (error) throw error
-        toast({ title: 'Admin listo', description: 'Intentando ingresar automáticamente...' })
+        toast({ variant: 'success', title: 'Admin listo', description: 'Intentando ingresar automáticamente...' })
         await signIn(email, password)
       } catch (e: any) {
         setError(e?.message || 'Credenciales incorrectas. Verifique su email y contraseña.')
@@ -61,7 +61,7 @@ export default function AdminLogin() {
         body: { email, password, role: 'admin' },
       })
       if (error) throw error
-      toast({ title: 'Admin listo', description: 'Ahora intenta iniciar sesión.' })
+      toast({ variant: 'success', title: 'Admin listo', description: 'Ahora intenta iniciar sesión.' })
     } catch (e: any) {
       setError(e?.message || 'No se pudo crear/restablecer el admin')
     } finally {
@@ -77,7 +77,7 @@ export default function AdminLogin() {
         body: { email, password, role: 'client' },
       })
       if (error) throw error
-      toast({ title: 'Cliente creado', description: 'Usuario cliente creado exitosamente.' })
+      toast({ variant: 'success', title: 'Cliente creado', description: 'Usuario cliente creado exitosamente.' })
     } catch (e: any) {
       setError(e?.message || 'No se pudo crear el cliente')
     } finally {
@@ -92,6 +92,7 @@ export default function AdminLogin() {
       const { data, error } = await supabase.functions.invoke('setup-complete-system')
       if (error) throw error
       toast({ 
+        variant: 'success',
         title: 'Sistema configurado', 
         description: `Completado. Empresas procesadas: ${data?.results?.length || 0}` 
       })

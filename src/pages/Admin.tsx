@@ -142,6 +142,7 @@ export default function Admin() {
       if (error) throw error
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Empresa y usuario creados correctamente",
       })
@@ -172,6 +173,7 @@ export default function Admin() {
       if (error) throw error
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Empresa actualizada correctamente",
       })
@@ -244,6 +246,7 @@ export default function Admin() {
       }
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: `Se ha borrado "${companyName}"`,
       })
@@ -288,6 +291,7 @@ export default function Admin() {
       }
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Usuario creado/contraseña actualizada correctamente",
       })
@@ -318,6 +322,7 @@ export default function Admin() {
       if (error) throw error
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Proyecto creado correctamente",
       })
@@ -351,6 +356,7 @@ export default function Admin() {
       if (error) throw error
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: `Se ha borrado "${projectName}"`,
       })
@@ -399,6 +405,7 @@ export default function Admin() {
       if (dbError) throw dbError
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Documento subido correctamente",
       })
@@ -433,6 +440,7 @@ export default function Admin() {
       if (error) throw error
 
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Documento eliminado correctamente",
       })

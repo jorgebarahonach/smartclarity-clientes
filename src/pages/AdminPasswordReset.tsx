@@ -38,6 +38,7 @@ const AdminPasswordReset = () => {
 
       setSuccess(true)
       toast({
+        variant: "success",
         title: "Éxito",
         description: "Contraseña actualizada correctamente",
       })
