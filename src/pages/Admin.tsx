@@ -541,7 +541,6 @@ export default function Admin() {
                 <Button 
                   variant="default" 
                   onClick={() => setShowNewCompanyForm(true)}
-                  className="bg-black text-white hover:bg-black/90"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Nueva empresa
