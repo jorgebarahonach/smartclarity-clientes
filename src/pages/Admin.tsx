@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -78,11 +79,12 @@ export default function Admin() {
     file: null as File | null
   })
   const [deleteConfirm, setDeleteConfirm] = useState<{
-    type: 'company' | 'project' | null
+    type: 'company' | 'project' | 'document' | null
     id: string
     name: string
     email?: string
-  }>({ type: null, id: '', name: '', email: '' })
+    filePath?: string
+  }>({ type: null, id: '', name: '', email: '', filePath: '' })
 
   useEffect(() => {
     if (authLoading) return
@@ -471,7 +473,11 @@ export default function Admin() {
     }
   }
 
-  const handleDeleteDocument = async (docId: string, filePath: string) => {
+  const confirmDeleteDocument = (docId: string, docName: string, filePath: string) => {
+    setDeleteConfirm({ type: 'document', id: docId, name: docName, filePath })
+  }
+
+  const handleDeleteDocument = async (docId: string, filePath: string, docName: string) => {
     try {
       // Delete from storage
       await supabase.storage
@@ -489,7 +495,7 @@ export default function Admin() {
       toast({
         variant: "success",
         title: "Éxito",
-        description: "Documento eliminado correctamente",
+        description: `Se ha borrado "${docName}"`,
       })
       
       loadData()
@@ -525,7 +531,7 @@ export default function Admin() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header variant="admin" title="Panel Administrativo" />
 
-      <AlertDialog open={deleteConfirm.type !== null} onOpenChange={(open) => !open && setDeleteConfirm({ type: null, id: '', name: '', email: '' })}>
+      <AlertDialog open={deleteConfirm.type !== null} onOpenChange={(open) => !open && setDeleteConfirm({ type: null, id: '', name: '', email: '', filePath: '' })}>
         <AlertDialogContent className="bg-background border-border">
           <AlertDialogHeader>
             <div className="flex justify-center mb-4">
@@ -548,8 +554,10 @@ export default function Admin() {
                   handleDeleteCompany(deleteConfirm.id, deleteConfirm.email!, deleteConfirm.name)
                 } else if (deleteConfirm.type === 'project') {
                   handleDeleteProject(deleteConfirm.id, deleteConfirm.name)
+                } else if (deleteConfirm.type === 'document') {
+                  handleDeleteDocument(deleteConfirm.id, deleteConfirm.filePath!, deleteConfirm.name)
                 }
-                setDeleteConfirm({ type: null, id: '', name: '', email: '' })
+                setDeleteConfirm({ type: null, id: '', name: '', email: '', filePath: '' })
               }}
               className="mt-0 bg-[hsl(var(--action-red))] hover:bg-[hsl(var(--action-red))]/90 text-white"
             >
@@ -1051,28 +1059,34 @@ export default function Admin() {
                                   <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
                                 ) : (
                                   <div className="space-y-2">
-                                    {projectDocuments.map((doc) => (
-                                      <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-[hsl(var(--action-green))]" />
-                                            <p className="font-medium text-sm">{doc.name}</p>
+                                    {projectDocuments.map((doc) => {
+                                      const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                          doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                      return (
+                                        <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                              <FileText className="h-4 w-4 text-muted-foreground" />
+                                              <p className="font-medium text-sm">{doc.name}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                              <Badge variant="secondary" className="text-xs">
+                                                {doc.document_type}
+                                              </Badge>
+                                              <Badge variant="outline" className="text-xs">
+                                                .{fileExtension}
+                                              </Badge>
+                                            </div>
                                           </div>
-                                          <p className="text-xs text-muted-foreground mt-1">
-                                            📎 {doc.original_file_name || doc.name}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
-                                          </p>
+                                          <button
+                                            className="p-1.5 rounded hover:bg-muted"
+                                            onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                          >
+                                            <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                          </button>
                                         </div>
-                                        <button
-                                          className="p-1.5 rounded hover:bg-muted"
-                                          onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
-                                        >
-                                          <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                        </button>
-                                      </div>
-                                    ))}
+                                      )
+                                    })}
                                   </div>
                                 )}
                               </div>
