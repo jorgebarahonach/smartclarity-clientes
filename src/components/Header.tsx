@@ -25,39 +25,58 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
   }
 
   return (
-    <header className="border-b bg-card">
+    <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center h-16">
-        <div className="flex items-center gap-3">
-          <img 
-            src={smartClarityLogo} 
-            alt="SmartClarity Logo" 
-            className="w-[250px] h-auto cursor-pointer"
-            onClick={() => navigate('/')}
-          />
-          {title && (
-            <h1 className="text-lg font-semibold">{title}</h1>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-2 h-8">
-          {showAdminAccess && (
-            <Button 
-              onClick={() => navigate('/admin/login')} 
-              variant="outline"
-              size="sm"
-              className="h-8 bg-white border-black text-black hover:bg-gray-50 opacity-50"
-            >
-              Administración de Portal
-            </Button>
-          )}
-          
-          {user && (variant === 'client' || variant === 'admin') && (
-            <Button variant="outline" onClick={handleSignOut} size="sm" className="h-8">
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar Sesión
-            </Button>
-          )}
-        </div>
+        {variant === 'admin' ? (
+          <>
+            <div className="flex-1" />
+            <h1 className="text-xl font-medium text-gray-900 absolute left-1/2 transform -translate-x-1/2">
+              {title}
+            </h1>
+            <div className="flex-1 flex justify-end">
+              {user && (
+                <Button variant="ghost" onClick={handleSignOut} size="sm" className="h-9">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar Sesión
+                </Button>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              <img 
+                src={smartClarityLogo} 
+                alt="SmartClarity Logo" 
+                className="w-[250px] h-auto cursor-pointer"
+                onClick={() => navigate('/')}
+              />
+              {title && (
+                <h1 className="text-lg font-semibold">{title}</h1>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 h-8">
+              {showAdminAccess && (
+                <Button 
+                  onClick={() => navigate('/admin/login')} 
+                  variant="outline"
+                  size="sm"
+                  className="h-8 bg-white border-black text-black hover:bg-gray-50 opacity-50"
+                >
+                  Administración de Portal
+                </Button>
+              )}
+              
+              {user && variant === 'client' && (
+                <Button variant="outline" onClick={handleSignOut} size="sm" className="h-8">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar Sesión
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </header>
   )
