@@ -469,21 +469,6 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header variant="admin" title="Panel Administrativo" />
-      
-      <div className="container mx-auto px-4 py-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={(e) => {
-            e.preventDefault()
-            console.log('Navegando a /')
-            navigate('/')
-          }}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver al Portal
-        </Button>
-      </div>
 
       <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs defaultValue="companies" className="w-full">
