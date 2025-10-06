@@ -1025,72 +1025,66 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="documents" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestionar Documentos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {projectsByCompany.map((company) => (
-                    <div key={company.id} className="border rounded-lg">
-                      <div className="p-4 bg-muted">
-                        <h3 className="font-semibold">{company.name}</h3>
-                      </div>
-                      <div className="p-4 space-y-4">
-                        {company.projects.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No hay proyectos para esta empresa</p>
-                        ) : (
-                          company.projects.map((project) => {
-                            const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                            return (
-                              <div key={project.id} className="border rounded">
-                                <div className="p-3 bg-muted/50">
-                                  <h4 className="font-medium">{project.name}</h4>
-                                  {project.description && (
-                                    <p className="text-sm text-muted-foreground">{project.description}</p>
-                                  )}
-                                </div>
-                                <div className="p-3">
-                                  {projectDocuments.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                                  ) : (
-                                    <div className="space-y-2">
-                                       {projectDocuments.map((doc) => (
-                                          <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                            <div className="flex-1">
-                                              <div className="flex items-center gap-2">
-                                                <p className="font-medium text-sm">{doc.name}</p>
-                                                <FileText className="h-3 w-3 text-muted-foreground" />
-                                              </div>
-                                              <p className="text-xs text-muted-foreground mt-1">
-                                                📎 Archivo original: {doc.original_file_name || doc.name}
-                                              </p>
-                                              <p className="text-xs text-muted-foreground">
-                                                Tipo: {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
-                                              </p>
-                                            </div>
-                                          <Button
-                                            variant="action-red"
-                                            size="sm"
-                                            onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          })
-                        )}
-                      </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                {projectsByCompany.map((company) => (
+                  <Card key={company.id} className="p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold">{company.name}</h3>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="space-y-3">
+                      {company.projects.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No hay proyectos para esta empresa</p>
+                      ) : (
+                        company.projects.map((project) => {
+                          const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                          return (
+                            <Card key={project.id} className="p-4">
+                              <div className="mb-3">
+                                <h4 className="font-medium">{project.name}</h4>
+                                {project.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                )}
+                              </div>
+                              <div>
+                                {projectDocuments.length === 0 ? (
+                                  <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {projectDocuments.map((doc) => (
+                                      <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-[hsl(var(--action-green))]" />
+                                            <p className="font-medium text-sm">{doc.name}</p>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            📎 {doc.original_file_name || doc.name}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {doc.document_type} | {new Date(doc.created_at).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                        <button
+                                          className="p-1.5 rounded hover:bg-muted"
+                                          onClick={() => handleDeleteDocument(doc.id, doc.file_path)}
+                                        >
+                                          <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          )
+                        })
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
