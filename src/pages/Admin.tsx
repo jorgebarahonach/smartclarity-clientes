@@ -47,7 +47,7 @@ type Document = {
   file_path: string
   file_type: string
   file_size: number
-  document_type: 'manual' | 'plano' | 'archivo' | 'otro'
+  document_type: 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro'
   created_at: string
   projects?: { name: string }
 }
@@ -73,7 +73,7 @@ export default function Admin() {
   const [showNewProjectForm, setShowNewProjectForm] = useState(false)
   const [uploadForm, setUploadForm] = useState({
     project_id: '',
-    document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'otro',
+    document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro',
     document_name: '',
     file: null as File | null
   })
@@ -930,12 +930,9 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upload" className="mt-6">
-            <Card>
+            <Card className="max-w-[50%]">
               <CardHeader>
                 <CardTitle>Subir Documento</CardTitle>
-                <CardDescription>
-                  Empresa → Proyecto → Nombre del documento → Tipo de documento → Archivo
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFileUpload} className="space-y-4">
@@ -962,7 +959,7 @@ export default function Admin() {
                     <Label htmlFor="type">Tipo de Documento</Label>
                     <Select 
                       value={uploadForm.document_type} 
-                      onValueChange={(value: 'manual' | 'plano' | 'archivo' | 'otro') => 
+                      onValueChange={(value: 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro') => 
                         setUploadForm(prev => ({ ...prev, document_type: value }))
                       }
                     >
@@ -973,6 +970,8 @@ export default function Admin() {
                         <SelectItem value="archivo">Archivo</SelectItem>
                         <SelectItem value="manual">Manual</SelectItem>
                         <SelectItem value="plano">Plano</SelectItem>
+                        <SelectItem value="normativa">Normativa</SelectItem>
+                        <SelectItem value="doc_oficial">Doc. oficial</SelectItem>
                         <SelectItem value="otro">Otro</SelectItem>
                       </SelectContent>
                     </Select>
@@ -980,7 +979,7 @@ export default function Admin() {
 
                   <div className="space-y-2">
                     <Label htmlFor="file">
-                      Archivo - <span className="underline cursor-pointer">examinar</span>
+                      Archivo
                     </Label>
                     <Input
                       id="file"
@@ -1029,9 +1028,6 @@ export default function Admin() {
             <Card>
               <CardHeader>
                 <CardTitle>Gestionar Documentos</CardTitle>
-                <CardDescription>
-                  Taxonomía por: empresas → proyectos → documentos → tipo de documentos
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
