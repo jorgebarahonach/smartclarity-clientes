@@ -63,6 +63,7 @@ export default function Admin() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(false)
   const [uploadLoading, setUploadLoading] = useState(false)
+  const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
 
   // Form states
   const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
@@ -1047,10 +1048,14 @@ export default function Admin() {
                       ) : (
                         company.projects.map((project) => {
                           const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                          const [isOpen, setIsOpen] = useState(true)
+                          const isOpen = openProjects[project.id] !== false // default to open
                           
                           return (
-                            <Collapsible key={project.id} open={isOpen} onOpenChange={setIsOpen}>
+                            <Collapsible 
+                              key={project.id} 
+                              open={isOpen} 
+                              onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
+                            >
                               <Card className="p-4">
                                 <CollapsibleTrigger className="w-full">
                                   <div className="flex items-center justify-between mb-3">
