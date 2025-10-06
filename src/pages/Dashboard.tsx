@@ -222,7 +222,7 @@ export default function Dashboard() {
               </CollapsibleTrigger>
               
               <CollapsibleContent>
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   {projects.map((project) => {
                     const projectDocuments = documents.filter(doc => doc.project_id === project.id)
                     const isOpen = !!openProjects[project.id]
