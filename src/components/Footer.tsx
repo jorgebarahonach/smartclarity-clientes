@@ -5,7 +5,9 @@ import smartClarityLogoBlack from '@/assets/smartclarity-logo-black.png'
 export function Footer() {
   const { isAdmin } = useAuth()
   
-  const mailtoLink = `mailto:jaime.lopez@smartclarity.com?subject=${encodeURIComponent('No puedo acceder a mis documentos')}`
+  const handleEmailClick = () => {
+    window.location.href = `mailto:jaime.lopez@smartclarity.com?subject=${encodeURIComponent('No puedo acceder a mis documentos')}`
+  }
 
   return (
     <footer className="border-t bg-background mt-auto">
@@ -27,11 +29,9 @@ export function Footer() {
                 variant="outline" 
                 size="sm"
                 className="h-8 bg-gray-500 border-gray-500 text-white hover:bg-white hover:text-gray-500"
-                asChild
+                onClick={handleEmailClick}
               >
-                <a href={mailtoLink}>
-                  No puedo acceder a mis documentos
-                </a>
+                No puedo acceder a mis documentos
               </Button>
             </div>
           )}
