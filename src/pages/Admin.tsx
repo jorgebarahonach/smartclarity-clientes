@@ -604,38 +604,35 @@ export default function Admin() {
                 </Card>
               )}
 
-              <div className="grid gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {companies.map((company) => (
                   <div key={company.id} className="space-y-2">
                     <Card>
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="space-y-3">
                           <div>
                             <h4 className="font-medium">{company.name}</h4>
                             <p className="text-sm text-muted-foreground">{company.email}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="action-green"
-                              size="sm"
-                              onClick={() => setEditingCompany(company)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="action-yellow"
-                              size="sm"
+                          <div className="flex items-center gap-3">
+                            <button
+                              className="text-sm underline text-foreground hover:text-foreground/80"
                               onClick={() => setShowPasswordReset(company.email)}
                             >
-                              Cambiar Clave
-                            </Button>
-                            <Button
-                              variant="action-red"
-                              size="sm"
+                              Cambiar clave
+                            </button>
+                            <button
+                              className="p-1.5 rounded hover:bg-muted"
+                              onClick={() => setEditingCompany(company)}
+                            >
+                              <Edit className="h-4 w-4 text-[hsl(var(--action-green))]" />
+                            </button>
+                            <button
+                              className="p-1.5 rounded hover:bg-muted"
                               onClick={() => confirmDeleteCompany(company.id, company.name, company.email)}
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                              <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                            </button>
                           </div>
                         </div>
                       </CardContent>
