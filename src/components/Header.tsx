@@ -29,7 +29,13 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
       <div className="container mx-auto px-4 py-4 flex justify-between items-center h-16">
         {variant === 'admin' ? (
           <>
-            <div className="flex-1" />
+            <div className="flex-1">
+              <img 
+                src={smartClarityLogo} 
+                alt="SmartClarity Logo" 
+                className="w-[200px] h-auto"
+              />
+            </div>
             <h1 className="text-xl font-medium text-gray-900 absolute left-1/2 transform -translate-x-1/2">
               {title}
             </h1>
