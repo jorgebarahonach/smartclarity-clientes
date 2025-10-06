@@ -13,45 +13,69 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing Supabase environment variables')
     }
 
-    // Get the Authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
+    // Parse request body to check if userId is provided
+    const body = await req.json().catch(() => ({}))
+    const { userId } = body
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader }
+    // Create admin client
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+    let user
+    if (userId) {
+      // Get specific user by ID (admin function)
+      const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
+      
+      if (userError || !data.user) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to get user' }),
+          { 
+            status: 404, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
       }
-    })
+      user = data.user
+    } else {
+      // Get current authenticated user
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Missing authorization header' }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to get user' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      const supabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: {
+          headers: { Authorization: authHeader }
         }
-      )
+      })
+
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !currentUser) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to get user' }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      user = currentUser
     }
 
     // Get user role
-    const { data: roleData, error: roleError } = await supabase
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
@@ -64,11 +88,9 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        user: {
-          id: user.id,
-          email: user.email,
-          role: role
-        }
+        email: user.email,
+        user_metadata: user.user_metadata,
+        role: role
       }),
       { 
         status: 200, 

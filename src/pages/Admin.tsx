@@ -57,6 +57,8 @@ type Document = {
 type AdminUser = {
   id: string
   email: string
+  firstName?: string
+  lastName?: string
   created_at: string
 }
 
@@ -76,7 +78,7 @@ export default function Admin() {
   // Form states
   const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
   const [newProject, setNewProject] = useState({ name: '', description: '', company_id: '' })
-  const [newAdmin, setNewAdmin] = useState({ email: '', password: '' })
+  const [newAdmin, setNewAdmin] = useState({ email: '', password: '', firstName: '', lastName: '' })
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
@@ -91,7 +93,7 @@ export default function Admin() {
     file: null as File | null
   })
   const [deleteConfirm, setDeleteConfirm] = useState<{
-    type: 'company' | 'project' | 'document' | null
+    type: 'company' | 'project' | 'document' | 'admin' | null
     id: string
     name: string
     email?: string
@@ -154,6 +156,8 @@ export default function Admin() {
         return {
           id: role.user_id,
           email: userData?.email || 'Email no disponible',
+          firstName: userData?.user_metadata?.firstName,
+          lastName: userData?.user_metadata?.lastName,
           created_at: role.created_at
         }
       })
@@ -549,6 +553,8 @@ export default function Admin() {
         body: { 
           email: newAdmin.email, 
           password: newAdmin.password,
+          firstName: newAdmin.firstName,
+          lastName: newAdmin.lastName,
           role: 'admin'
         }
       })
@@ -561,7 +567,7 @@ export default function Admin() {
         description: "Administrador creado correctamente",
       })
       
-      setNewAdmin({ email: '', password: '' })
+      setNewAdmin({ email: '', password: '', firstName: '', lastName: '' })
       setShowNewAdminForm(false)
       loadData()
     } catch (error) {
@@ -645,6 +651,8 @@ export default function Admin() {
                   handleDeleteProject(deleteConfirm.id, deleteConfirm.name)
                 } else if (deleteConfirm.type === 'document') {
                   handleDeleteDocument(deleteConfirm.id, deleteConfirm.filePath!, deleteConfirm.name)
+                } else if (deleteConfirm.type === 'admin') {
+                  handleDeleteAdmin(deleteConfirm.email!)
                 }
                 setDeleteConfirm({ type: null, id: '', name: '', email: '', filePath: '' })
               }}
@@ -690,6 +698,30 @@ export default function Admin() {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleCreateAdmin} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="adminFirstName">Nombre</Label>
+                          <Input
+                            id="adminFirstName"
+                            type="text"
+                            value={newAdmin.firstName}
+                            onChange={(e) => setNewAdmin(prev => ({ ...prev, firstName: e.target.value }))}
+                            placeholder="Juan José"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="adminLastName">Apellido</Label>
+                          <Input
+                            id="adminLastName"
+                            type="text"
+                            value={newAdmin.lastName}
+                            onChange={(e) => setNewAdmin(prev => ({ ...prev, lastName: e.target.value }))}
+                            placeholder="De Comba"
+                            required
+                          />
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="adminEmail">Email</Label>
                         <Input
@@ -735,7 +767,10 @@ export default function Admin() {
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="default">Administrador</Badge>
                           </div>
-                          <p className="font-medium">{admin.email}</p>
+                          {admin.firstName && admin.lastName && (
+                            <p className="font-medium">{admin.firstName} {admin.lastName}</p>
+                          )}
+                          <p className="text-sm text-muted-foreground">{admin.email}</p>
                           <p className="text-xs text-muted-foreground">
                             Creado: {new Date(admin.created_at).toLocaleDateString('es-ES')}
                           </p>
@@ -745,9 +780,14 @@ export default function Admin() {
                             <button
                               className="p-1.5 rounded hover:bg-muted"
                               onClick={() => {
-                                if (window.confirm(`¿Eliminar administrador ${admin.email}?`)) {
-                                  handleDeleteAdmin(admin.email)
-                                }
+                                setDeleteConfirm({ 
+                                  type: 'admin', 
+                                  id: admin.id, 
+                                  name: admin.firstName && admin.lastName 
+                                    ? `${admin.firstName} ${admin.lastName}` 
+                                    : admin.email,
+                                  email: admin.email
+                                })
                               }}
                             >
                               <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />

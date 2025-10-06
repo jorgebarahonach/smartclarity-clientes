@@ -17,7 +17,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { email, password, role = 'admin' } = await req.json();
+    const { email, password, firstName, lastName, role = 'admin' } = await req.json();
 
     // Try to find existing user by email
     const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -29,9 +29,10 @@ serve(async (req) => {
 
     if (existingUser) {
       userId = existingUser.id;
-      // Update password for existing user
+      // Update password and metadata for existing user
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
         password,
+        user_metadata: { firstName, lastName }
       });
       if (updateError) throw updateError;
     } else {
@@ -40,6 +41,7 @@ serve(async (req) => {
         email,
         password,
         email_confirm: true,
+        user_metadata: { firstName, lastName }
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
