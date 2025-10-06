@@ -194,110 +194,84 @@ export default function Dashboard() {
           )}
         </div>
 
-        <Card className="p-6">
-          {projects.length === 0 ? (
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">{company.name}</h3>
-              <span className="text-sm text-muted-foreground">(0 proyectos)</span>
-            </div>
-          ) : (
-            <Collapsible 
-              open={companyOpen}
-              onOpenChange={setCompanyOpen}
-            >
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">{company.name}</h3>
-                    <span className="text-sm text-muted-foreground">
-                      ({projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'})
-                    </span>
-                  </div>
-                  <ChevronDown 
-                    className={`h-5 w-5 text-muted-foreground transition-transform ${
-                      companyOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-              </CollapsibleTrigger>
+        {projects.length === 0 ? (
+          <Card className="p-6">
+            <p className="text-muted-foreground">No hay proyectos disponibles</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {projects.map((project) => {
+              const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+              const isOpen = !!openProjects[project.id]
               
-              <CollapsibleContent>
-                <div className="grid grid-cols-2 gap-3">
-                  {projects.map((project) => {
-                    const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                    const isOpen = !!openProjects[project.id]
+              return (
+                <Collapsible 
+                  key={project.id} 
+                  open={isOpen} 
+                  onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
+                >
+                  <Card className="p-4">
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-left flex-1">
+                          <h4 className="font-medium">{project.name}</h4>
+                          {project.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                          )}
+                        </div>
+                        <ChevronDown 
+                          className={`h-5 w-5 text-muted-foreground transition-transform ${
+                            isOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </div>
+                    </CollapsibleTrigger>
                     
-                    return (
-                      <Collapsible 
-                        key={project.id} 
-                        open={isOpen} 
-                        onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
-                      >
-                        <Card className="p-4">
-                          <CollapsibleTrigger className="w-full">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="text-left flex-1">
-                                <h4 className="font-medium">{project.name}</h4>
-                                {project.description && (
-                                  <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                                )}
-                              </div>
-                              <ChevronDown 
-                                className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                  isOpen ? 'rotate-180' : ''
-                                }`}
-                              />
-                            </div>
-                          </CollapsibleTrigger>
-                          
-                          <CollapsibleContent>
-                            <div>
-                              {projectDocuments.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                              ) : (
-                                <div className="space-y-2">
-                                  {projectDocuments.map((doc) => {
-                                    const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                        doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
-                                    return (
-                                      <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-muted-foreground" />
-                                            <p className="font-medium text-sm">{doc.name}</p>
-                                          </div>
-                                          <div className="flex items-center gap-2 mt-2">
-                                            <Badge variant="secondary" className="text-xs">
-                                              {doc.document_type}
-                                            </Badge>
-                                            <Badge variant="outline" className="text-xs">
-                                              .{fileExtension}
-                                            </Badge>
-                                          </div>
-                                        </div>
-                                        <Button
-                                          variant="action-green"
-                                          size="sm"
-                                          onClick={() => handleDownload(doc)}
-                                        >
-                                          <Download className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    )
-                                  })}
+                    <CollapsibleContent>
+                      <div>
+                        {projectDocuments.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {projectDocuments.map((doc) => {
+                              const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                  doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                              return (
+                                <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4 text-muted-foreground" />
+                                      <p className="font-medium text-sm">{doc.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {doc.document_type}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        .{fileExtension}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="action-green"
+                                    size="sm"
+                                    onClick={() => handleDownload(doc)}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
                                 </div>
-                              )}
-                            </div>
-                          </CollapsibleContent>
-                        </Card>
-                      </Collapsible>
-                    )
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-        </Card>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              )
+            })}
+          </div>
+        )}
       </main>
 
       <Footer />
