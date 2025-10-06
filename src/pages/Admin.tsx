@@ -811,12 +811,20 @@ export default function Admin() {
                                   <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
                                 )}
                               </div>
-                              <button
-                                className="p-1.5 rounded hover:bg-muted"
-                                onClick={() => confirmDeleteProject(project.id, project.name)}
-                              >
-                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="p-1.5 rounded hover:bg-muted"
+                                  onClick={() => {/* TODO: Add edit functionality */}}
+                                >
+                                  <Edit className="h-4 w-4 text-[hsl(var(--action-green))]" />
+                                </button>
+                                <button
+                                  className="p-1.5 rounded hover:bg-muted"
+                                  onClick={() => confirmDeleteProject(project.id, project.name)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                </button>
+                              </div>
                             </div>
                           </Card>
                         ))
