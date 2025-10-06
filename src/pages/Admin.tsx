@@ -491,20 +491,20 @@ export default function Admin() {
       <Header variant="admin" title="Panel Administrativo" />
 
       <AlertDialog open={deleteConfirm.type !== null} onOpenChange={(open) => !open && setDeleteConfirm({ type: null, id: '', name: '', email: '' })}>
-        <AlertDialogContent className="bg-[hsl(var(--toast-warning-bg))] border-[hsl(var(--toast-warning-fg))] border-2">
+        <AlertDialogContent className="bg-background border-border">
           <AlertDialogHeader>
             <div className="flex justify-center mb-4">
-              <AlertTriangle className="h-16 w-16" style={{ color: 'hsl(var(--action-yellow))' }} />
+              <AlertTriangle className="h-16 w-16 text-[hsl(var(--action-yellow))]" />
             </div>
-            <AlertDialogTitle className="text-center text-xl text-[hsl(var(--toast-warning-fg))]">
+            <AlertDialogTitle className="text-center text-xl text-foreground">
               Confirmar Eliminación
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-base text-[hsl(var(--toast-warning-fg))]">
+            <AlertDialogDescription className="text-center text-base text-muted-foreground">
               Borrará "{deleteConfirm.name}": ¿está seguro de esta acción irreversible?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row justify-center gap-4">
-            <AlertDialogCancel className="mt-0 bg-muted hover:bg-muted/80 text-foreground border-none">
+            <AlertDialogCancel className="mt-0">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
