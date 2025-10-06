@@ -1,19 +1,32 @@
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
-import { AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 
 export function Toaster() {
   const { toasts } = useToast();
+
+  const getIcon = (variant?: string) => {
+    const iconProps = { className: "h-12 w-12 mb-2" };
+    
+    switch (variant) {
+      case 'success':
+        return <CheckCircle2 {...iconProps} style={{ color: 'hsl(var(--action-green))' }} />;
+      case 'warning':
+        return <AlertTriangle {...iconProps} style={{ color: 'hsl(var(--action-yellow))' }} />;
+      case 'destructive':
+        return <AlertCircle {...iconProps} style={{ color: 'hsl(var(--action-red))' }} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
         return (
           <Toast key={id} variant={variant} {...props}>
-            {variant === 'destructive' && (
-              <AlertCircle className="h-8 w-8 text-black mb-2" />
-            )}
-            <div className="text-center space-y-1">
+            {getIcon(variant)}
+            <div className="text-center space-y-2">
               {title && <ToastTitle className="text-center">{title}</ToastTitle>}
               {description && <ToastDescription className="text-center">{description}</ToastDescription>}
             </div>
