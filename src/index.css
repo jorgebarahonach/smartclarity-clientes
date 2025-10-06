@@ -55,12 +55,12 @@ All colors MUST be HSL.
     --action-red-foreground: 0 0% 100%;
 
     /* Toast solid backgrounds - Material Design light tones */
-    --toast-success-bg: 122 39% 85%;
-    --toast-success-fg: 122 39% 25%;
-    --toast-warning-bg: 45 100% 85%;
-    --toast-warning-fg: 45 100% 25%;
-    --toast-error-bg: 4 90% 85%;
-    --toast-error-fg: 4 90% 35%;
+    --toast-success-bg: 122 39% 49%;
+    --toast-success-fg: 0 0% 100%;
+    --toast-warning-bg: 45 100% 51%;
+    --toast-warning-fg: 0 0% 13%;
+    --toast-error-bg: 4 90% 58%;
+    --toast-error-fg: 0 0% 100%;
 
     --radius: 0.25rem;
 
@@ -121,6 +121,14 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Toast variants in dark mode */
+    --toast-success-bg: 122 39% 45%;
+    --toast-success-fg: 0 0% 100%;
+    --toast-warning-bg: 45 100% 45%;
+    --toast-warning-fg: 0 0% 13%;
+    --toast-error-bg: 4 90% 50%;
+    --toast-error-fg: 0 0% 100%;
   }
 }
 
