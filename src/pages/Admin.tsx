@@ -844,115 +844,126 @@ export default function Admin() {
                   
                   return (
                     <Card key={company.id} className="p-6">
-                      <Collapsible 
-                        open={isCompanyOpen}
-                        onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
-                      >
-                        <CollapsibleTrigger className="w-full">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-semibold">{company.name}</h3>
-                              <span className="text-sm text-muted-foreground">
-                                ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
-                              </span>
+                      {company.projects.length === 0 ? (
+                        // Si no hay proyectos, solo mostrar el nombre sin collapsible
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">{company.name}</h3>
+                          <span className="text-sm text-muted-foreground">
+                            (0 proyectos)
+                          </span>
+                        </div>
+                      ) : (
+                        // Si hay proyectos, mostrar collapsible con flecha
+                        <Collapsible 
+                          open={isCompanyOpen}
+                          onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
+                        >
+                          <CollapsibleTrigger className="w-full">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">{company.name}</h3>
+                                <span className="text-sm text-muted-foreground">
+                                  ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
+                                </span>
+                              </div>
+                              <ChevronDown 
+                                className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                  isCompanyOpen ? 'rotate-180' : ''
+                                }`}
+                              />
                             </div>
-                            <ChevronDown 
-                              className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                isCompanyOpen ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </div>
-                        </CollapsibleTrigger>
-                        
-                        <CollapsibleContent>
-                          <div className="space-y-3">
-                            {company.projects.map((project) => (
-                              <Card key={project.id} className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <h4 className="font-medium">{project.name}</h4>
-                                    {project.description && (
-                                      <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                                    )}
+                          </CollapsibleTrigger>
+                          
+                          <CollapsibleContent>
+                            <div className="space-y-3">
+                              {company.projects.map((project) => (
+                                <Card key={project.id} className="p-4">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-medium">{project.name}</h4>
+                                      {project.description && (
+                                        <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        className="p-1.5 rounded hover:bg-muted"
+                                        onClick={() => setEditingProject(project)}
+                                      >
+                                        <Edit className="h-4 w-4 text-[hsl(var(--action-green))]" />
+                                      </button>
+                                      <button
+                                        className="p-1.5 rounded hover:bg-muted"
+                                        onClick={() => confirmDeleteProject(project.id, project.name)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                      </button>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      className="p-1.5 rounded hover:bg-muted"
-                                      onClick={() => setEditingProject(project)}
-                                    >
-                                      <Edit className="h-4 w-4 text-[hsl(var(--action-green))]" />
-                                    </button>
-                                    <button
-                                      className="p-1.5 rounded hover:bg-muted"
-                                      onClick={() => confirmDeleteProject(project.id, project.name)}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                    </button>
-                                  </div>
-                                </div>
 
-                                {/* Edit Project Form - appears below the project card */}
-                                {editingProject && editingProject.id === project.id && (
-                                  <Card className="mt-2 ml-4 border-2">
-                                    <CardHeader>
-                                      <CardTitle>Editar Proyecto</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <form onSubmit={handleUpdateProject} className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
+                                  {/* Edit Project Form - appears below the project card */}
+                                  {editingProject && editingProject.id === project.id && (
+                                    <Card className="mt-2 ml-4 border-2">
+                                      <CardHeader>
+                                        <CardTitle>Editar Proyecto</CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <form onSubmit={handleUpdateProject} className="space-y-4">
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                              <Label htmlFor="editProjectName">Nombre del Proyecto</Label>
+                                              <Input
+                                                id="editProjectName"
+                                                value={editingProject.name}
+                                                onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                                                required
+                                              />
+                                            </div>
+                                            <div className="space-y-2">
+                                              <Label htmlFor="editProjectCompany">Empresa</Label>
+                                              <Select 
+                                                value={editingProject.company_id} 
+                                                onValueChange={(value) => setEditingProject(prev => prev ? ({ ...prev, company_id: value }) : null)}
+                                              >
+                                                <SelectTrigger>
+                                                  <SelectValue placeholder="Seleccionar empresa" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {companies.map((company) => (
+                                                    <SelectItem key={company.id} value={company.id}>
+                                                      {company.name}
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          </div>
                                           <div className="space-y-2">
-                                            <Label htmlFor="editProjectName">Nombre del Proyecto</Label>
+                                            <Label htmlFor="editProjectDescription">Descripción</Label>
                                             <Input
-                                              id="editProjectName"
-                                              value={editingProject.name}
-                                              onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
-                                              required
+                                              id="editProjectDescription"
+                                              value={editingProject.description || ''}
+                                              onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
                                             />
                                           </div>
-                                          <div className="space-y-2">
-                                            <Label htmlFor="editProjectCompany">Empresa</Label>
-                                            <Select 
-                                              value={editingProject.company_id} 
-                                              onValueChange={(value) => setEditingProject(prev => prev ? ({ ...prev, company_id: value }) : null)}
-                                            >
-                                              <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar empresa" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {companies.map((company) => (
-                                                  <SelectItem key={company.id} value={company.id}>
-                                                    {company.name}
-                                                  </SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
+                                          <div className="flex gap-2">
+                                            <Button type="submit" variant="action-green">
+                                              Actualizar Proyecto
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={() => setEditingProject(null)}>
+                                              Cancelar
+                                            </Button>
                                           </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                          <Label htmlFor="editProjectDescription">Descripción</Label>
-                                          <Input
-                                            id="editProjectDescription"
-                                            value={editingProject.description || ''}
-                                            onChange={(e) => setEditingProject(prev => prev ? ({ ...prev, description: e.target.value }) : null)}
-                                          />
-                                        </div>
-                                        <div className="flex gap-2">
-                                          <Button type="submit" variant="action-green">
-                                            Actualizar Proyecto
-                                          </Button>
-                                          <Button type="button" variant="outline" onClick={() => setEditingProject(null)}>
-                                            Cancelar
-                                          </Button>
-                                        </div>
-                                      </form>
-                                    </CardContent>
-                                  </Card>
-                                )}
-                              </Card>
-                            ))}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                                        </form>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+                                </Card>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                     </Card>
                   )
                 })}
@@ -1063,100 +1074,111 @@ export default function Admin() {
                   
                   return (
                     <Card key={company.id} className="p-6">
-                      <Collapsible 
-                        open={isCompanyOpen}
-                        onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
-                      >
-                        <CollapsibleTrigger className="w-full">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-semibold">{company.name}</h3>
-                              <span className="text-sm text-muted-foreground">
-                                ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
-                              </span>
+                      {company.projects.length === 0 ? (
+                        // Si no hay proyectos, solo mostrar el nombre sin collapsible
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">{company.name}</h3>
+                          <span className="text-sm text-muted-foreground">
+                            (0 proyectos)
+                          </span>
+                        </div>
+                      ) : (
+                        // Si hay proyectos, mostrar collapsible con flecha
+                        <Collapsible 
+                          open={isCompanyOpen}
+                          onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
+                        >
+                          <CollapsibleTrigger className="w-full">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">{company.name}</h3>
+                                <span className="text-sm text-muted-foreground">
+                                  ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
+                                </span>
+                              </div>
+                              <ChevronDown 
+                                className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                  isCompanyOpen ? 'rotate-180' : ''
+                                }`}
+                              />
                             </div>
-                            <ChevronDown 
-                              className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                isCompanyOpen ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </div>
-                        </CollapsibleTrigger>
-                        
-                        <CollapsibleContent>
-                          <div className="space-y-3">
-                            {company.projects.map((project) => {
-                              const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                              const isOpen = !!openProjects[project.id] // default to closed
-                              
-                              return (
-                                <Collapsible 
-                                  key={project.id} 
-                                  open={isOpen} 
-                                  onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
-                                >
-                                  <Card className="p-4">
-                                    <CollapsibleTrigger className="w-full">
-                                      <div className="flex items-center justify-between mb-3">
-                                        <div className="text-left flex-1">
-                                          <h4 className="font-medium">{project.name}</h4>
-                                          {project.description && (
-                                            <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                          </CollapsibleTrigger>
+                          
+                          <CollapsibleContent>
+                            <div className="space-y-3">
+                              {company.projects.map((project) => {
+                                const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                                const isOpen = !!openProjects[project.id] // default to closed
+                                
+                                return (
+                                  <Collapsible 
+                                    key={project.id} 
+                                    open={isOpen} 
+                                    onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
+                                  >
+                                    <Card className="p-4">
+                                      <CollapsibleTrigger className="w-full">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <div className="text-left flex-1">
+                                            <h4 className="font-medium">{project.name}</h4>
+                                            {project.description && (
+                                              <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                            )}
+                                          </div>
+                                          <ChevronDown 
+                                            className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                              isOpen ? 'rotate-180' : ''
+                                            }`}
+                                          />
+                                        </div>
+                                      </CollapsibleTrigger>
+                                      
+                                      <CollapsibleContent>
+                                        <div>
+                                          {projectDocuments.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              {projectDocuments.map((doc) => {
+                                                const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                                    doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                                return (
+                                                  <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                                    <div className="flex-1">
+                                                      <div className="flex items-center gap-2">
+                                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                                        <p className="font-medium text-sm">{doc.name}</p>
+                                                      </div>
+                                                      <div className="flex items-center gap-2 mt-2">
+                                                        <Badge variant="secondary" className="text-xs">
+                                                          {doc.document_type}
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-xs">
+                                                          .{fileExtension}
+                                                        </Badge>
+                                                      </div>
+                                                    </div>
+                                                    <button
+                                                      className="p-1.5 rounded hover:bg-muted"
+                                                      onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                                    >
+                                                      <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                                    </button>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
                                           )}
                                         </div>
-                                        <ChevronDown 
-                                          className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                            isOpen ? 'rotate-180' : ''
-                                          }`}
-                                        />
-                                      </div>
-                                    </CollapsibleTrigger>
-                                    
-                                    <CollapsibleContent>
-                                      <div>
-                                        {projectDocuments.length === 0 ? (
-                                          <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                                        ) : (
-                                          <div className="space-y-2">
-                                            {projectDocuments.map((doc) => {
-                                              const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                                  doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
-                                              return (
-                                                <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                                  <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                      <FileText className="h-4 w-4 text-muted-foreground" />
-                                                      <p className="font-medium text-sm">{doc.name}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                      <Badge variant="secondary" className="text-xs">
-                                                        {doc.document_type}
-                                                      </Badge>
-                                                      <Badge variant="outline" className="text-xs">
-                                                        .{fileExtension}
-                                                      </Badge>
-                                                    </div>
-                                                  </div>
-                                                  <button
-                                                    className="p-1.5 rounded hover:bg-muted"
-                                                    onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
-                                                  >
-                                                    <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                                  </button>
-                                                </div>
-                                              )
-                                            })}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </CollapsibleContent>
-                                  </Card>
-                                </Collapsible>
-                              )
-                            })}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                                      </CollapsibleContent>
+                                    </Card>
+                                  </Collapsible>
+                                )
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
                     </Card>
                   )
                 })}
