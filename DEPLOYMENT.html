@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Implementación - SmartClarity Document Portal</title>
+    <style>
+        body {
+            font-family: 'Calibri', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in;
+            color: #333;
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+            font-size: 28pt;
+        }
+        h2 {
+            color: #1e40af;
+            margin-top: 30px;
+            font-size: 20pt;
+            border-left: 4px solid #2563eb;
+            padding-left: 10px;
+        }
+        h3 {
+            color: #1e40af;
+            margin-top: 20px;
+            font-size: 16pt;
+        }
+        h4 {
+            color: #475569;
+            margin-top: 15px;
+            font-size: 14pt;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10pt;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2563eb;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 9pt;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .info {
+            background-color: #dbeafe;
+            border-left: 4px solid #2563eb;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .checklist {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            font-weight: bold;
+            color: #2563eb;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e2e8f0;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📋 Guía de Implementación - SmartClarity Document Portal</h1>
+
+<div class="info">
+    <p><strong>Resumen:</strong> Este documento describe los pasos necesarios para implementar y tomar control del proyecto SmartClarity Document Portal en su propia infraestructura.</p>
+</div>
+
+<hr>
+
+<h2>🚀 Pasos de Implementación</h2>
+
+<h3>1. Obtener el Código (GitHub)</h3>
+
+<h4>Opción A - Fork del Repositorio (Recomendado)</h4>
+<ol>
+    <li>Ir al repositorio original en GitHub</li>
+    <li>Hacer clic en el botón "Fork" (esquina superior derecha)</li>
+    <li>Seleccionar su cuenta/organización de GitHub</li>
+    <li>Clonar su fork localmente:</li>
+</ol>
+
+<pre>git clone https://github.com/SU-ORGANIZACION/nombre-del-repo.git
+cd nombre-del-repo</pre>
+
+<h4>Opción B - Transferencia Directa</h4>
+<p>Si prefieren que se les transfiera el repositorio directamente, coordinar con el desarrollador.</p>
+
+<hr>
+
+<h3>2. Configurar Supabase (Base de Datos + Storage)</h3>
+
+<h4>2.1 Crear Proyecto en Supabase</h4>
+<ol>
+    <li>Ir a <a href="https://supabase.com">https://supabase.com</a></li>
+    <li>Crear cuenta o iniciar sesión</li>
+    <li>Click en "New Project"</li>
+    <li>Completar:
+        <ul>
+            <li><strong>Organization:</strong> Su organización</li>
+            <li><strong>Project Name:</strong> smartclarity-portal (o el nombre que prefieran)</li>
+            <li><strong>Database Password:</strong> Guardar en lugar seguro</li>
+            <li><strong>Region:</strong> Seleccionar la más cercana (e.g., South America)</li>
+        </ul>
+    </li>
+    <li>Esperar 1-2 minutos mientras se crea el proyecto</li>
+</ol>
+
+<h4>2.2 Ejecutar Migraciones de Base de Datos</h4>
+<ol>
+    <li>En Supabase Dashboard, ir a <strong>SQL Editor</strong></li>
+    <li>Ejecutar las migraciones en orden (archivos en <code>supabase/migrations/</code>):</li>
+</ol>
+
+<p><strong>Primera migración - Estructura base:</strong></p>
+<pre>-- Copiar y ejecutar el contenido del archivo:
+-- supabase/migrations/20240101000000_initial_schema.sql</pre>
+
+<p><strong>Migraciones adicionales:</strong></p>
+<pre>-- Ejecutar cada archivo .sql en orden cronológico
+-- (revisar carpeta supabase/migrations/)</pre>
+
+<p>Verificar que las tablas se crearon:</p>
+<ul>
+    <li><code>companies</code></li>
+    <li><code>projects</code></li>
+    <li><code>documents</code></li>
+    <li><code>user_roles</code></li>
+</ul>
+
+<h4>2.3 Configurar Storage (Almacenamiento de Archivos)</h4>
+<ol>
+    <li>En Supabase Dashboard, ir a <strong>Storage</strong></li>
+    <li>El bucket <code>documents</code> debería estar creado por las migraciones</li>
+    <li>Verificar las políticas RLS del bucket</li>
+</ol>
+
+<h4>2.4 Obtener Credenciales de Supabase</h4>
+<ol>
+    <li>En Supabase Dashboard, ir a <strong>Settings</strong> → <strong>API</strong></li>
+    <li>Copiar:
+        <ul>
+            <li><strong>Project URL</strong> (e.g., <code>https://xxxxx.supabase.co</code>)</li>
+            <li><strong>Project Reference ID</strong> (e.g., <code>xxxxx</code>)</li>
+            <li><strong>anon/public key</strong> (empieza con <code>eyJ...</code>)</li>
+            <li><strong>service_role key</strong> (⚠️ <strong>NUNCA exponer públicamente</strong>)</li>
+        </ul>
+    </li>
+</ol>
+
+<div class="page-break"></div>
+
+<h3>3. Configurar Variables del Proyecto</h3>
+
+<h4>3.1 Actualizar Credenciales en el Código</h4>
+<p>Editar el archivo <code>src/integrations/supabase/client.ts</code>:</p>
+
+<pre>const SUPABASE_URL = "https://SU-PROJECT-ID.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "SU-ANON-KEY-AQUI";</pre>
+
+<h4>3.2 Configurar Secrets en Supabase (para Edge Functions)</h4>
+<ol>
+    <li>En Supabase Dashboard, ir a <strong>Settings</strong> → <strong>Edge Functions</strong></li>
+    <li>Agregar los siguientes secrets:
+        <ul>
+            <li><code>SUPABASE_URL</code>: Su Project URL</li>
+            <li><code>SUPABASE_ANON_KEY</code>: Su anon/public key</li>
+            <li><code>SUPABASE_SERVICE_ROLE_KEY</code>: Su service role key</li>
+            <li><code>RESEND_API_KEY</code>: (si usan emails) API key de Resend.com</li>
+        </ul>
+    </li>
+</ol>
+
+<hr>
+
+<h3>4. Desplegar Edge Functions</h3>
+
+<p>Las Edge Functions son necesarias para la administración de usuarios.</p>
+
+<h4>4.1 Instalar Supabase CLI</h4>
+<pre># macOS
+brew install supabase/tap/supabase
+
+# Windows (con Scoop)
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+
+# Linux
+brew install supabase/tap/supabase</pre>
+
+<h4>4.2 Desplegar Functions</h4>
+<pre># Login a Supabase
+supabase login
+
+# Link al proyecto
+supabase link --project-ref SU-PROJECT-ID
+
+# Desplegar todas las functions
+supabase functions deploy admin-create-user
+supabase functions deploy admin-delete-user
+supabase functions deploy admin-update-password
+supabase functions deploy admin-assign-role
+supabase functions deploy admin-get-current-user
+supabase functions deploy send-support-email
+supabase functions deploy create-admin-user
+supabase functions deploy bootstrap-admin
+supabase functions deploy setup-admin
+supabase functions deploy setup-complete-system</pre>
+
+<hr>
+
+<h3>5. Crear Usuario Administrador Inicial</h3>
+
+<h4>Opción A - Usando Edge Function (Recomendado)</h4>
+<pre>curl -X POST \
+  https://SU-PROJECT-ID.supabase.co/functions/v1/bootstrap-admin \
+  -H "Authorization: Bearer SU-ANON-KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@suempresa.com",
+    "password": "Password123!",
+    "role": "admin"
+  }'</pre>
+
+<h4>Opción B - Desde Supabase Dashboard</h4>
+<ol>
+    <li>Ir a <strong>Authentication</strong> → <strong>Users</strong></li>
+    <li>Click "Add user" → "Create new user"</li>
+    <li>Ingresar email y password</li>
+    <li>Luego ir a <strong>SQL Editor</strong> y ejecutar:</li>
+</ol>
+
+<pre>INSERT INTO user_roles (user_id, role)
+VALUES (
+  (SELECT id FROM auth.users WHERE email = 'admin@suempresa.com'),
+  'admin'
+);</pre>
+
+<div class="page-break"></div>
+
+<h3>6. Desplegar la Aplicación</h3>
+
+<h4>6.1 Instalar Dependencias</h4>
+<pre>npm install
+# o
+bun install</pre>
+
+<h4>6.2 Opciones de Hosting</h4>
+
+<h5>Opción A - Vercel (Recomendado para React)</h5>
+<ol>
+    <li>Ir a <a href="https://vercel.com">vercel.com</a></li>
+    <li>Importar su repositorio de GitHub</li>
+    <li>Framework preset: <strong>Vite</strong></li>
+    <li>Deploy</li>
+</ol>
+
+<h5>Opción B - Netlify</h5>
+<ol>
+    <li>Ir a <a href="https://netlify.com">netlify.com</a></li>
+    <li>New site from Git</li>
+    <li>Build command: <code>npm run build</code></li>
+    <li>Publish directory: <code>dist</code></li>
+</ol>
+
+<h5>Opción C - Lovable (con Custom Domain)</h5>
+<ul>
+    <li>Si prefieren hosting en Lovable con su dominio personalizado</li>
+    <li>Requiere Lovable Pro Plan ($25/mes)</li>
+</ul>
+
+<hr>
+
+<h3>7. Configurar Dominio Personalizado</h3>
+
+<h4>En Vercel:</h4>
+<ol>
+    <li>Settings → Domains</li>
+    <li>Agregar su dominio</li>
+    <li>Configurar DNS según instrucciones</li>
+</ol>
+
+<h4>En Netlify:</h4>
+<ol>
+    <li>Domain settings → Add custom domain</li>
+    <li>Configurar DNS según instrucciones</li>
+</ol>
+
+<hr>
+
+<h2>🔄 Flujo de Actualizaciones Futuras</h2>
+
+<h3>Cuando se requieran nuevas funcionalidades:</h3>
+
+<ol>
+    <li><strong>Desarrollador</strong> trabaja en su ambiente Lovable</li>
+    <li>Cambios se sincronizan automáticamente a su repositorio GitHub</li>
+    <li><strong>Desarrollador</strong> crea Pull Request desde su repo → fork de ustedes</li>
+    <li><strong>Sus ingenieros</strong> revisan el PR:
+        <ul>
+            <li>Cambios de código</li>
+            <li>Nuevas migraciones SQL (si las hay)</li>
+            <li>Documentación de cambios</li>
+        </ul>
+    </li>
+    <li><strong>Sus ingenieros</strong> aprueban y hacen merge</li>
+    <li>Si hay migraciones de DB:
+        <ul>
+            <li>Ejecutarlas en su Supabase (SQL Editor)</li>
+            <li>O usar <code>supabase db push</code> con CLI</li>
+        </ul>
+    </li>
+    <li>Deploy automático se activa (Vercel/Netlify)</li>
+</ol>
+
+<hr>
+
+<h2>📊 Estructura del Proyecto</h2>
+
+<pre>smartclarity-portal/
+├── src/
+│   ├── components/        # Componentes React
+│   ├── pages/            # Páginas principales
+│   ├── hooks/            # Custom hooks (useAuth, etc.)
+│   ├── integrations/     # Cliente Supabase
+│   └── lib/              # Utilidades
+├── supabase/
+│   ├── functions/        # Edge Functions
+│   └── migrations/       # Scripts SQL de base de datos
+└── public/               # Assets estáticos</pre>
+
+<hr>
+
+<h2>🔐 Seguridad - Checklist</h2>
+
+<ul class="checklist">
+    <li>Service Role Key de Supabase NUNCA en código público</li>
+    <li>Service Role Key solo en Supabase Edge Functions secrets</li>
+    <li>Row Level Security (RLS) habilitado en todas las tablas</li>
+    <li>Políticas RLS revisadas y probadas</li>
+    <li>Bucket de storage con políticas correctas</li>
+    <li>Solo admin puede acceder a panel de administración</li>
+    <li>Usuarios solo ven sus propios proyectos/documentos</li>
+</ul>
+
+<hr>
+
+<h2>📞 Soporte Post-Entrega</h2>
+
+<p>Para consultas sobre nuevas funcionalidades o upgrades, contactar al desarrollador.</p>
+
+<p>Para issues técnicos de infraestructura (Supabase, hosting), su equipo de ingenieros tiene acceso completo a:</p>
+<ul>
+    <li>GitHub repository (código fuente)</li>
+    <li>Supabase project (base de datos, storage, functions)</li>
+    <li>Hosting platform (Vercel/Netlify)</li>
+</ul>
+
+<hr>
+
+<h2>📝 Notas Importantes</h2>
+
+<div class="warning">
+    <p><strong>⚠️ Puntos Críticos:</strong></p>
+    <ol>
+        <li><strong>Backup de Base de Datos:</strong> Supabase hace backups automáticos (Plan Pro), pero recomendamos backups adicionales para producción</li>
+        <li><strong>Monitoreo:</strong> Revisar logs en Supabase Dashboard → Edge Functions → Logs</li>
+        <li><strong>Escalabilidad:</strong> Plan Free de Supabase: hasta 500MB DB, 1GB storage, 2GB bandwidth. Para crecer, considerar Plan Pro ($25/mes)</li>
+        <li><strong>Actualizaciones de Seguridad:</strong> Revisar dependencias regularmente con <code>npm audit</code></li>
+    </ol>
+</div>
+
+<hr>
+
+<table>
+    <tr>
+        <th>Campo</th>
+        <th>Valor</th>
+    </tr>
+    <tr>
+        <td><strong>Fecha de Entrega</strong></td>
+        <td>[FECHA]</td>
+    </tr>
+    <tr>
+        <td><strong>Versión del Proyecto</strong></td>
+        <td>1.0.0</td>
+    </tr>
+    <tr>
+        <td><strong>Desarrollador</strong></td>
+        <td>[SU NOMBRE/EMPRESA]</td>
+    </tr>
+</table>
+
+</body>
+</html>
