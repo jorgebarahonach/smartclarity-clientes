@@ -64,6 +64,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false)
   const [uploadLoading, setUploadLoading] = useState(false)
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
+  const [openCompanies, setOpenCompanies] = useState<Record<string, boolean>>({})
 
   // Form states
   const [newCompany, setNewCompany] = useState({ name: '', email: '', password: '' })
@@ -1037,88 +1038,108 @@ export default function Admin() {
           <TabsContent value="documents" className="mt-6">
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                {projectsByCompany.map((company) => (
-                  <Card key={company.id} className="p-6">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold">{company.name}</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {company.projects.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No hay proyectos para esta empresa</p>
-                      ) : (
-                        company.projects.map((project) => {
-                          const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                          const isOpen = !!openProjects[project.id] // default to closed
-                          
-                          return (
-                            <Collapsible 
-                              key={project.id} 
-                              open={isOpen} 
-                              onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
-                            >
-                              <Card className="p-4">
-                                <CollapsibleTrigger className="w-full">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <div className="text-left flex-1">
-                                      <h4 className="font-medium">{project.name}</h4>
-                                      {project.description && (
-                                        <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                                      )}
-                                    </div>
-                                    <ChevronDown 
-                                      className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                        isOpen ? 'rotate-180' : ''
-                                      }`}
-                                    />
-                                  </div>
-                                </CollapsibleTrigger>
-                                
-                                <CollapsibleContent>
-                                  <div>
-                                    {projectDocuments.length === 0 ? (
-                                      <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                                    ) : (
-                                      <div className="space-y-2">
-                                        {projectDocuments.map((doc) => {
-                                          const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                              doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
-                                          return (
-                                            <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                              <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                  <FileText className="h-4 w-4 text-muted-foreground" />
-                                                  <p className="font-medium text-sm">{doc.name}</p>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                  <Badge variant="secondary" className="text-xs">
-                                                    {doc.document_type}
-                                                  </Badge>
-                                                  <Badge variant="outline" className="text-xs">
-                                                    .{fileExtension}
-                                                  </Badge>
-                                                </div>
-                                              </div>
-                                              <button
-                                                className="p-1.5 rounded hover:bg-muted"
-                                                onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
-                                              >
-                                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                              </button>
-                                            </div>
-                                          )
-                                        })}
+                {projectsByCompany.map((company) => {
+                  const isCompanyOpen = !!openCompanies[company.id]; // default to closed
+                  
+                  return (
+                    <Card key={company.id} className="p-6">
+                      <Collapsible 
+                        open={isCompanyOpen}
+                        onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
+                      >
+                        <CollapsibleTrigger className="w-full">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold">{company.name}</h3>
+                              <span className="text-sm text-muted-foreground">
+                                ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
+                              </span>
+                            </div>
+                            <ChevronDown 
+                              className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                isCompanyOpen ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </div>
+                        </CollapsibleTrigger>
+                        
+                        <CollapsibleContent>
+                          <div className="space-y-3">
+                            {company.projects.map((project) => {
+                              const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                              const isOpen = !!openProjects[project.id] // default to closed
+                              
+                              return (
+                                <Collapsible 
+                                  key={project.id} 
+                                  open={isOpen} 
+                                  onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
+                                >
+                                  <Card className="p-4">
+                                    <CollapsibleTrigger className="w-full">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <div className="text-left flex-1">
+                                          <h4 className="font-medium">{project.name}</h4>
+                                          {project.description && (
+                                            <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                          )}
+                                        </div>
+                                        <ChevronDown 
+                                          className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                            isOpen ? 'rotate-180' : ''
+                                          }`}
+                                        />
                                       </div>
-                                    )}
-                                  </div>
-                                </CollapsibleContent>
-                              </Card>
-                            </Collapsible>
-                          )
-                        })
-                      )}
-                    </div>
-                  </Card>
-                ))}
+                                    </CollapsibleTrigger>
+                                    
+                                    <CollapsibleContent>
+                                      <div>
+                                        {projectDocuments.length === 0 ? (
+                                          <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                                        ) : (
+                                          <div className="space-y-2">
+                                            {projectDocuments.map((doc) => {
+                                              const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                                  doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                              return (
+                                                <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                                  <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                      <FileText className="h-4 w-4 text-muted-foreground" />
+                                                      <p className="font-medium text-sm">{doc.name}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                      <Badge variant="secondary" className="text-xs">
+                                                        {doc.document_type}
+                                                      </Badge>
+                                                      <Badge variant="outline" className="text-xs">
+                                                        .{fileExtension}
+                                                      </Badge>
+                                                    </div>
+                                                  </div>
+                                                  <button
+                                                    className="p-1.5 rounded hover:bg-muted"
+                                                    onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                                  >
+                                                    <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                                                  </button>
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </CollapsibleContent>
+                                  </Card>
+                                </Collapsible>
+                              )
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  )
+                })}
               </div>
             </div>
           </TabsContent>
