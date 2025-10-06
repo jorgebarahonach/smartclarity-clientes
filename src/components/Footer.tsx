@@ -1,12 +1,19 @@
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import smartClarityLogoBlack from '@/assets/smartclarity-logo-black.png'
 
 export function Footer() {
   const { isAdmin } = useAuth()
+  const { toast } = useToast()
   
   const handleEmailClick = () => {
-    window.location.href = `mailto:jaime.lopez@smartclarity.com?subject=${encodeURIComponent('No puedo acceder a mis documentos')}`
+    const mailto = `mailto:jaime.lopez@smartclarity.com?subject=${encodeURIComponent('No puedo acceder a mis documentos')}`
+    const win = window.open(mailto, '_blank')
+    if (!win) {
+      try { navigator.clipboard?.writeText('jaime.lopez@smartclarity.com') } catch {}
+      toast({ title: 'No se pudo abrir el correo', description: 'Copiamos el correo de soporte al portapapeles: jaime.lopez@smartclarity.com' })
+    }
   }
 
   return (
