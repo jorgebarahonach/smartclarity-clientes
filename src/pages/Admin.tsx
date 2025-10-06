@@ -471,7 +471,15 @@ export default function Admin() {
       <Header variant="admin" title="Panel Administrativo" />
       
       <div className="container mx-auto px-4 py-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={(e) => {
+            e.preventDefault()
+            console.log('Navegando a /')
+            navigate('/')
+          }}
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver al Portal
         </Button>
