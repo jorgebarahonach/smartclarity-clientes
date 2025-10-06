@@ -1,23 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-// Removed npm:resend import due to build environment; using direct HTTP call
-const resend = {
-  emails: {
-    send: async ({ from, to, subject, html }: { from: string; to: string[]; subject: string; html: string; }) => {
-      const apiKey = Deno.env.get("RESEND_API_KEY");
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ from, to, subject, html }),
-      });
-      const body = await res.json().catch(() => null);
-      if (res.ok) return { data: body } as any;
-      return { error: body || { status: res.status } } as any;
-    }
-  }
-};
+import { Resend } from "npm:resend@4.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -43,6 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const apiKey = Deno.env.get("RESEND_API_KEY");
     if (!apiKey) {
+      console.error("RESEND_API_KEY is not configured");
       return new Response(
         JSON.stringify({ success: false, code: "email_provider_missing_api_key", friendlyMessage: "Email service not configured" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
@@ -50,11 +35,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { to, subject, company, fullName, email, phone, problem }: SupportEmailRequest = await req.json();
+    
+    console.log("Processing support email request for:", { company, email });
 
     const fromAddress = Deno.env.get("RESEND_FROM") ?? "Lovable <onboarding@resend.dev>";
 
     // Send email to support
-    const supportEmailResponse = await resend.emails.send({
+    const { data: supportData, error: supportError } = await resend.emails.send({
       from: fromAddress,
       to: [to],
       subject,
@@ -78,9 +65,16 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `,
     });
+    
+    if (supportError) {
+      console.error("Error sending support email:", supportError);
+      throw supportError;
+    }
+    
+    console.log("Support email sent successfully:", supportData);
 
     // Send confirmation email to user
-    const confirmationEmailResponse = await resend.emails.send({
+    const { data: confirmationData, error: confirmationError } = await resend.emails.send({
       from: fromAddress,
       to: [email],
       subject: "Hemos recibido su consulta - Portal SmartClarity",
@@ -105,22 +99,14 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `,
     });
-
-    const providerErrors = [supportEmailResponse?.error, confirmationEmailResponse?.error].filter(Boolean);
-
-    if (providerErrors.length) {
-      console.error("Resend provider error", providerErrors);
-      const invalidKey = providerErrors.some((e: any) => `${e?.message || e?.name}`.toLowerCase().includes("api key"));
-      return new Response(
-        JSON.stringify({
-          success: false,
-          code: invalidKey ? "email_provider_invalid_api_key" : "email_provider_error",
-          providerErrors,
-          friendlyMessage: "Email provider error",
-        }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
-      );
+    
+    if (confirmationError) {
+      console.error("Error sending confirmation email:", confirmationError);
+      throw confirmationError;
     }
+    
+    console.log("Confirmation email sent successfully:", confirmationData);
+
 
     return new Response(
       JSON.stringify({ success: true }),
