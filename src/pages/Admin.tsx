@@ -1048,7 +1048,7 @@ export default function Admin() {
                       ) : (
                         company.projects.map((project) => {
                           const projectDocuments = documents.filter(doc => doc.project_id === project.id)
-                          const isOpen = openProjects[project.id] !== false // default to open
+                          const isOpen = !!openProjects[project.id] // default to closed
                           
                           return (
                             <Collapsible 
