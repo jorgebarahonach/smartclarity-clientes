@@ -10,7 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText } from 'lucide-react'
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -66,6 +76,12 @@ export default function Admin() {
     document_name: '',
     file: null as File | null
   })
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: 'company' | 'project' | null
+    id: string
+    name: string
+    email?: string
+  }>({ type: null, id: '', name: '', email: '' })
 
   useEffect(() => {
     if (authLoading) return
@@ -191,9 +207,7 @@ export default function Admin() {
   }
 
   const confirmDeleteCompany = (companyId: string, companyName: string, companyEmail: string) => {
-    if (confirm(`Borrará "${companyName}": ¿está seguro de esta acción irreversible?`)) {
-      handleDeleteCompany(companyId, companyEmail, companyName)
-    }
+    setDeleteConfirm({ type: 'company', id: companyId, name: companyName, email: companyEmail })
   }
 
   const handleDeleteCompany = async (companyId: string, companyEmail: string, companyName: string) => {
@@ -341,9 +355,7 @@ export default function Admin() {
   }
 
   const confirmDeleteProject = (projectId: string, projectName: string) => {
-    if (confirm(`Borrará "${projectName}": ¿está seguro de esta acción irreversible?`)) {
-      handleDeleteProject(projectId, projectName)
-    }
+    setDeleteConfirm({ type: 'project', id: projectId, name: projectName })
   }
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
@@ -477,6 +489,40 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header variant="admin" title="Panel Administrativo" />
+
+      <AlertDialog open={deleteConfirm.type !== null} onOpenChange={(open) => !open && setDeleteConfirm({ type: null, id: '', name: '', email: '' })}>
+        <AlertDialogContent className="bg-[hsl(var(--toast-warning-bg))] border-[hsl(var(--toast-warning-fg))] border-2">
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <AlertTriangle className="h-16 w-16" style={{ color: 'hsl(var(--action-yellow))' }} />
+            </div>
+            <AlertDialogTitle className="text-center text-xl text-[hsl(var(--toast-warning-fg))]">
+              Confirmar Eliminación
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-base text-[hsl(var(--toast-warning-fg))]">
+              Borrará "{deleteConfirm.name}": ¿está seguro de esta acción irreversible?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row justify-center gap-4">
+            <AlertDialogCancel className="mt-0 bg-muted hover:bg-muted/80 text-foreground border-none">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirm.type === 'company') {
+                  handleDeleteCompany(deleteConfirm.id, deleteConfirm.email!, deleteConfirm.name)
+                } else if (deleteConfirm.type === 'project') {
+                  handleDeleteProject(deleteConfirm.id, deleteConfirm.name)
+                }
+                setDeleteConfirm({ type: null, id: '', name: '', email: '' })
+              }}
+              className="mt-0 bg-[hsl(var(--action-red))] hover:bg-[hsl(var(--action-red))]/90 text-white"
+            >
+              Aceptar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs defaultValue="companies" className="w-full">
