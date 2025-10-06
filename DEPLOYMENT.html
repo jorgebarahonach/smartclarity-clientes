@@ -3,436 +3,530 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía de Implementación - SmartClarity Document Portal</title>
+    <title>Manual de Usuario - SmartClarity Document Portal</title>
     <style>
         body {
-            font-family: 'Calibri', Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 8.5in;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 1in;
-            color: #333;
+            padding: 40px 20px;
+            background-color: #f5f7fa;
+            color: #2c3e50;
         }
         h1 {
-            color: #2563eb;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 10px;
-            font-size: 28pt;
+            color: #1e3a8a;
+            border-bottom: 4px solid #3b82f6;
+            padding-bottom: 15px;
+            font-size: 2.5em;
+            margin-bottom: 30px;
         }
         h2 {
             color: #1e40af;
-            margin-top: 30px;
-            font-size: 20pt;
-            border-left: 4px solid #2563eb;
-            padding-left: 10px;
+            margin-top: 40px;
+            font-size: 1.8em;
+            border-left: 5px solid #3b82f6;
+            padding-left: 15px;
         }
         h3 {
             color: #1e40af;
-            margin-top: 20px;
-            font-size: 16pt;
+            font-size: 1.3em;
+            margin-top: 25px;
         }
-        h4 {
-            color: #475569;
-            margin-top: 15px;
-            font-size: 14pt;
+        .header-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        code {
-            background-color: #f1f5f9;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 10pt;
+        .section {
+            background: white;
+            padding: 30px;
+            margin: 25px 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        pre {
-            background-color: #f1f5f9;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #2563eb;
-            overflow-x: auto;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 9pt;
-        }
-        .warning {
-            background-color: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        .info {
-            background-color: #dbeafe;
-            border-left: 4px solid #2563eb;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        .checklist {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .checklist li:before {
-            content: "☐ ";
-            font-weight: bold;
-            color: #2563eb;
-        }
-        ul, ol {
-            margin-left: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
+        .access-box {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            padding: 20px;
+            border-radius: 8px;
             margin: 20px 0;
         }
-        th, td {
-            border: 1px solid #cbd5e1;
-            padding: 10px;
-            text-align: left;
+        .warning-box {
+            background: #fef3c7;
+            border-left: 5px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-box {
+            background: #d1fae5;
+            border-left: 5px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        ul {
+            line-height: 2;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .tech-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .tech-card h4 {
+            color: #1e40af;
+            margin-top: 0;
+            font-size: 1.1em;
+        }
+        code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .contact-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .contact-box h2 {
+            color: white;
+            border: none;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
         }
         th {
-            background-color: #f1f5f9;
-            color: #1e40af;
+            background: #1e40af;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .step-number {
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
             font-weight: bold;
         }
-        .page-break {
-            page-break-after: always;
-        }
-        hr {
-            border: none;
-            border-top: 2px solid #e2e8f0;
-            margin: 30px 0;
+        @media print {
+            body {
+                background: white;
+            }
+            .section {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
     </style>
 </head>
 <body>
 
-<h1>📋 Guía de Implementación - SmartClarity Document Portal</h1>
-
-<div class="info">
-    <p><strong>Resumen:</strong> Este documento describe los pasos necesarios para implementar y tomar control del proyecto SmartClarity Document Portal en su propia infraestructura.</p>
+<div class="header-box">
+    <h1>👋 Manual de Usuario<br>SmartClarity Document Portal</h1>
+    <p style="font-size: 1.1em; margin: 0;">Su sistema de gestión documental ya está listo para usar</p>
 </div>
 
-<hr>
+<div class="section">
+    <h2>🌐 Acceso al Sistema</h2>
+    
+    <div class="access-box">
+        <h3>URL de Acceso</h3>
+        <p>Su portal está disponible en: <strong>[URL-DEL-CLIENTE.com]</strong></p>
+        
+        <h3>Credenciales Iniciales de Administrador</h3>
+        <p><strong>Email:</strong> [admin@suempresa.com]</p>
+        <p><strong>Contraseña:</strong> [Proporcionada de forma segura]</p>
+    </div>
+    
+    <div class="warning-box">
+        <strong>⚠️ IMPORTANTE:</strong> Cambie su contraseña en el primer inicio de sesión por seguridad.
+    </div>
+</div>
 
-<h2>🚀 Pasos de Implementación</h2>
+<div class="section">
+    <h2>📱 Funcionalidades del Sistema</h2>
+    
+    <h3>Para Administradores</h3>
+    <div class="feature-list">
+        <div class="feature-item">✅ Crear y gestionar empresas clientes</div>
+        <div class="feature-item">✅ Crear proyectos para cada empresa</div>
+        <div class="feature-item">✅ Subir documentos organizados por proyecto</div>
+        <div class="feature-item">✅ Crear usuarios (clientes) y asignarlos a empresas</div>
+        <div class="feature-item">✅ Gestionar accesos y permisos</div>
+        <div class="feature-item">✅ Ver toda la actividad del sistema</div>
+    </div>
+    
+    <h3>Para Clientes (Empresas)</h3>
+    <div class="feature-list">
+        <div class="feature-item">✅ Ver sus proyectos asignados</div>
+        <div class="feature-item">✅ Descargar documentos de sus proyectos</div>
+        <div class="feature-item">✅ Visualizar información de sus empresas</div>
+        <div class="feature-item">✅ Acceso seguro solo a su información</div>
+    </div>
+</div>
 
-<h3>1. Obtener el Código (GitHub)</h3>
-
-<h4>Opción A - Fork del Repositorio (Recomendado)</h4>
-<ol>
-    <li>Ir al repositorio original en GitHub</li>
-    <li>Hacer clic en el botón "Fork" (esquina superior derecha)</li>
-    <li>Seleccionar su cuenta/organización de GitHub</li>
-    <li>Clonar su fork localmente:</li>
-</ol>
-
-<pre>git clone https://github.com/SU-ORGANIZACION/nombre-del-repo.git
-cd nombre-del-repo</pre>
-
-<h4>Opción B - Transferencia Directa</h4>
-<p>Si prefieren que se les transfiera el repositorio directamente, coordinar con el desarrollador.</p>
-
-<hr>
-
-<h3>2. Configurar Supabase (Base de Datos + Storage)</h3>
-
-<h4>2.1 Crear Proyecto en Supabase</h4>
-<ol>
-    <li>Ir a <a href="https://supabase.com">https://supabase.com</a></li>
-    <li>Crear cuenta o iniciar sesión</li>
-    <li>Click en "New Project"</li>
-    <li>Completar:
-        <ul>
-            <li><strong>Organization:</strong> Su organización</li>
-            <li><strong>Project Name:</strong> smartclarity-portal (o el nombre que prefieran)</li>
-            <li><strong>Database Password:</strong> Guardar en lugar seguro</li>
-            <li><strong>Region:</strong> Seleccionar la más cercana (e.g., South America)</li>
-        </ul>
-    </li>
-    <li>Esperar 1-2 minutos mientras se crea el proyecto</li>
-</ol>
-
-<h4>2.2 Ejecutar Migraciones de Base de Datos</h4>
-<ol>
-    <li>En Supabase Dashboard, ir a <strong>SQL Editor</strong></li>
-    <li>Ejecutar las migraciones en orden (archivos en <code>supabase/migrations/</code>):</li>
-</ol>
-
-<p><strong>Primera migración - Estructura base:</strong></p>
-<pre>-- Copiar y ejecutar el contenido del archivo:
--- supabase/migrations/20240101000000_initial_schema.sql</pre>
-
-<p><strong>Migraciones adicionales:</strong></p>
-<pre>-- Ejecutar cada archivo .sql en orden cronológico
--- (revisar carpeta supabase/migrations/)</pre>
-
-<p>Verificar que las tablas se crearon:</p>
-<ul>
-    <li><code>companies</code></li>
-    <li><code>projects</code></li>
-    <li><code>documents</code></li>
-    <li><code>user_roles</code></li>
-</ul>
-
-<h4>2.3 Configurar Storage (Almacenamiento de Archivos)</h4>
-<ol>
-    <li>En Supabase Dashboard, ir a <strong>Storage</strong></li>
-    <li>El bucket <code>documents</code> debería estar creado por las migraciones</li>
-    <li>Verificar las políticas RLS del bucket</li>
-</ol>
-
-<h4>2.4 Obtener Credenciales de Supabase</h4>
-<ol>
-    <li>En Supabase Dashboard, ir a <strong>Settings</strong> → <strong>API</strong></li>
-    <li>Copiar:
-        <ul>
-            <li><strong>Project URL</strong> (e.g., <code>https://xxxxx.supabase.co</code>)</li>
-            <li><strong>Project Reference ID</strong> (e.g., <code>xxxxx</code>)</li>
-            <li><strong>anon/public key</strong> (empieza con <code>eyJ...</code>)</li>
-            <li><strong>service_role key</strong> (⚠️ <strong>NUNCA exponer públicamente</strong>)</li>
-        </ul>
-    </li>
-</ol>
-
-<div class="page-break"></div>
-
-<h3>3. Configurar Variables del Proyecto</h3>
-
-<h4>3.1 Actualizar Credenciales en el Código</h4>
-<p>Editar el archivo <code>src/integrations/supabase/client.ts</code>:</p>
-
-<pre>const SUPABASE_URL = "https://SU-PROJECT-ID.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "SU-ANON-KEY-AQUI";</pre>
-
-<h4>3.2 Configurar Secrets en Supabase (para Edge Functions)</h4>
-<ol>
-    <li>En Supabase Dashboard, ir a <strong>Settings</strong> → <strong>Edge Functions</strong></li>
-    <li>Agregar los siguientes secrets:
-        <ul>
-            <li><code>SUPABASE_URL</code>: Su Project URL</li>
-            <li><code>SUPABASE_ANON_KEY</code>: Su anon/public key</li>
-            <li><code>SUPABASE_SERVICE_ROLE_KEY</code>: Su service role key</li>
-            <li><code>RESEND_API_KEY</code>: (si usan emails) API key de Resend.com</li>
-        </ul>
-    </li>
-</ol>
-
-<hr>
-
-<h3>4. Desplegar Edge Functions</h3>
-
-<p>Las Edge Functions son necesarias para la administración de usuarios.</p>
-
-<h4>4.1 Instalar Supabase CLI</h4>
-<pre># macOS
-brew install supabase/tap/supabase
-
-# Windows (con Scoop)
-scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-scoop install supabase
-
-# Linux
-brew install supabase/tap/supabase</pre>
-
-<h4>4.2 Desplegar Functions</h4>
-<pre># Login a Supabase
-supabase login
-
-# Link al proyecto
-supabase link --project-ref SU-PROJECT-ID
-
-# Desplegar todas las functions
-supabase functions deploy admin-create-user
-supabase functions deploy admin-delete-user
-supabase functions deploy admin-update-password
-supabase functions deploy admin-assign-role
-supabase functions deploy admin-get-current-user
-supabase functions deploy send-support-email
-supabase functions deploy create-admin-user
-supabase functions deploy bootstrap-admin
-supabase functions deploy setup-admin
-supabase functions deploy setup-complete-system</pre>
-
-<hr>
-
-<h3>5. Crear Usuario Administrador Inicial</h3>
-
-<h4>Opción A - Usando Edge Function (Recomendado)</h4>
-<pre>curl -X POST \
-  https://SU-PROJECT-ID.supabase.co/functions/v1/bootstrap-admin \
-  -H "Authorization: Bearer SU-ANON-KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@suempresa.com",
-    "password": "Password123!",
-    "role": "admin"
-  }'</pre>
-
-<h4>Opción B - Desde Supabase Dashboard</h4>
-<ol>
-    <li>Ir a <strong>Authentication</strong> → <strong>Users</strong></li>
-    <li>Click "Add user" → "Create new user"</li>
-    <li>Ingresar email y password</li>
-    <li>Luego ir a <strong>SQL Editor</strong> y ejecutar:</li>
-</ol>
-
-<pre>INSERT INTO user_roles (user_id, role)
-VALUES (
-  (SELECT id FROM auth.users WHERE email = 'admin@suempresa.com'),
-  'admin'
-);</pre>
-
-<div class="page-break"></div>
-
-<h3>6. Desplegar la Aplicación</h3>
-
-<h4>6.1 Instalar Dependencias</h4>
-<pre>npm install
-# o
-bun install</pre>
-
-<h4>6.2 Opciones de Hosting</h4>
-
-<h5>Opción A - Vercel (Recomendado para React)</h5>
-<ol>
-    <li>Ir a <a href="https://vercel.com">vercel.com</a></li>
-    <li>Importar su repositorio de GitHub</li>
-    <li>Framework preset: <strong>Vite</strong></li>
-    <li>Deploy</li>
-</ol>
-
-<h5>Opción B - Netlify</h5>
-<ol>
-    <li>Ir a <a href="https://netlify.com">netlify.com</a></li>
-    <li>New site from Git</li>
-    <li>Build command: <code>npm run build</code></li>
-    <li>Publish directory: <code>dist</code></li>
-</ol>
-
-<h5>Opción C - Lovable (con Custom Domain)</h5>
-<ul>
-    <li>Si prefieren hosting en Lovable con su dominio personalizado</li>
-    <li>Requiere Lovable Pro Plan ($25/mes)</li>
-</ul>
-
-<hr>
-
-<h3>7. Configurar Dominio Personalizado</h3>
-
-<h4>En Vercel:</h4>
-<ol>
-    <li>Settings → Domains</li>
-    <li>Agregar su dominio</li>
-    <li>Configurar DNS según instrucciones</li>
-</ol>
-
-<h4>En Netlify:</h4>
-<ol>
-    <li>Domain settings → Add custom domain</li>
-    <li>Configurar DNS según instrucciones</li>
-</ol>
-
-<hr>
-
-<h2>🔄 Flujo de Actualizaciones Futuras</h2>
-
-<h3>Cuando se requieran nuevas funcionalidades:</h3>
-
-<ol>
-    <li><strong>Desarrollador</strong> trabaja en su ambiente Lovable</li>
-    <li>Cambios se sincronizan automáticamente a su repositorio GitHub</li>
-    <li><strong>Desarrollador</strong> crea Pull Request desde su repo → fork de ustedes</li>
-    <li><strong>Sus ingenieros</strong> revisan el PR:
-        <ul>
-            <li>Cambios de código</li>
-            <li>Nuevas migraciones SQL (si las hay)</li>
-            <li>Documentación de cambios</li>
-        </ul>
-    </li>
-    <li><strong>Sus ingenieros</strong> aprueban y hacen merge</li>
-    <li>Si hay migraciones de DB:
-        <ul>
-            <li>Ejecutarlas en su Supabase (SQL Editor)</li>
-            <li>O usar <code>supabase db push</code> con CLI</li>
-        </ul>
-    </li>
-    <li>Deploy automático se activa (Vercel/Netlify)</li>
-</ol>
-
-<hr>
-
-<h2>📊 Estructura del Proyecto</h2>
-
-<pre>smartclarity-portal/
-├── src/
-│   ├── components/        # Componentes React
-│   ├── pages/            # Páginas principales
-│   ├── hooks/            # Custom hooks (useAuth, etc.)
-│   ├── integrations/     # Cliente Supabase
-│   └── lib/              # Utilidades
-├── supabase/
-│   ├── functions/        # Edge Functions
-│   └── migrations/       # Scripts SQL de base de datos
-└── public/               # Assets estáticos</pre>
-
-<hr>
-
-<h2>🔐 Seguridad - Checklist</h2>
-
-<ul class="checklist">
-    <li>Service Role Key de Supabase NUNCA en código público</li>
-    <li>Service Role Key solo en Supabase Edge Functions secrets</li>
-    <li>Row Level Security (RLS) habilitado en todas las tablas</li>
-    <li>Políticas RLS revisadas y probadas</li>
-    <li>Bucket de storage con políticas correctas</li>
-    <li>Solo admin puede acceder a panel de administración</li>
-    <li>Usuarios solo ven sus propios proyectos/documentos</li>
-</ul>
-
-<hr>
-
-<h2>📞 Soporte Post-Entrega</h2>
-
-<p>Para consultas sobre nuevas funcionalidades o upgrades, contactar al desarrollador.</p>
-
-<p>Para issues técnicos de infraestructura (Supabase, hosting), su equipo de ingenieros tiene acceso completo a:</p>
-<ul>
-    <li>GitHub repository (código fuente)</li>
-    <li>Supabase project (base de datos, storage, functions)</li>
-    <li>Hosting platform (Vercel/Netlify)</li>
-</ul>
-
-<hr>
-
-<h2>📝 Notas Importantes</h2>
-
-<div class="warning">
-    <p><strong>⚠️ Puntos Críticos:</strong></p>
+<div class="section">
+    <h2>🚀 Guía de Uso - Administrador</h2>
+    
+    <h3><span class="step-number">1</span> Primer Inicio de Sesión</h3>
     <ol>
-        <li><strong>Backup de Base de Datos:</strong> Supabase hace backups automáticos (Plan Pro), pero recomendamos backups adicionales para producción</li>
-        <li><strong>Monitoreo:</strong> Revisar logs en Supabase Dashboard → Edge Functions → Logs</li>
-        <li><strong>Escalabilidad:</strong> Plan Free de Supabase: hasta 500MB DB, 1GB storage, 2GB bandwidth. Para crecer, considerar Plan Pro ($25/mes)</li>
-        <li><strong>Actualizaciones de Seguridad:</strong> Revisar dependencias regularmente con <code>npm audit</code></li>
+        <li>Acceder a <strong>[URL]/admin-login</strong></li>
+        <li>Ingresar con las credenciales proporcionadas</li>
+        <li>Cambiar contraseña inmediatamente</li>
+    </ol>
+    
+    <h3><span class="step-number">2</span> Crear una Empresa Cliente</h3>
+    <ol>
+        <li>Ir al panel de administración</li>
+        <li>Click en "Crear Empresa"</li>
+        <li>Completar:
+            <ul>
+                <li><strong>Nombre de la empresa:</strong> Nombre completo</li>
+                <li><strong>Email:</strong> Email corporativo del cliente</li>
+            </ul>
+        </li>
+        <li>Click en "Guardar"</li>
+    </ol>
+    
+    <h3><span class="step-number">3</span> Crear un Usuario para la Empresa</h3>
+    <ol>
+        <li>En el panel de administración</li>
+        <li>Click en "Crear Usuario"</li>
+        <li>Completar:
+            <ul>
+                <li><strong>Email:</strong> Email del usuario cliente (debe coincidir con el email de la empresa)</li>
+                <li><strong>Contraseña temporal:</strong> El sistema generará una</li>
+            </ul>
+        </li>
+        <li>Enviar credenciales al cliente de forma segura</li>
+    </ol>
+    
+    <h3><span class="step-number">4</span> Crear Proyectos</h3>
+    <ol>
+        <li>Panel de administración → "Proyectos"</li>
+        <li>Click en "Nuevo Proyecto"</li>
+        <li>Completar:
+            <ul>
+                <li><strong>Nombre del proyecto:</strong> Identificador claro</li>
+                <li><strong>Empresa asociada:</strong> Seleccionar de la lista</li>
+                <li><strong>Descripción:</strong> (Opcional) Detalles del proyecto</li>
+            </ul>
+        </li>
+        <li>Click en "Crear"</li>
+    </ol>
+    
+    <h3><span class="step-number">5</span> Subir Documentos</h3>
+    <ol>
+        <li>Seleccionar un proyecto</li>
+        <li>Click en "Subir Documento"</li>
+        <li>Seleccionar archivo desde su computadora</li>
+        <li>Completar información:
+            <ul>
+                <li><strong>Nombre del documento:</strong> Nombre descriptivo</li>
+                <li><strong>Tipo de documento:</strong> Categoría (contrato, plano, certificado, etc.)</li>
+            </ul>
+        </li>
+        <li>Click en "Subir"</li>
+    </ol>
+    
+    <div class="success-box">
+        <strong>Formatos soportados:</strong> PDF, Word, Excel, Imágenes (JPG, PNG), AutoCAD (DWG), etc.
+    </div>
+</div>
+
+<div class="section">
+    <h2>👤 Guía de Uso - Cliente</h2>
+    
+    <h3><span class="step-number">1</span> Acceso al Portal</h3>
+    <ol>
+        <li>Ir a <strong>[URL-DEL-CLIENTE.com]</strong></li>
+        <li>Click en "Iniciar Sesión"</li>
+        <li>Ingresar email y contraseña proporcionados</li>
+    </ol>
+    
+    <h3><span class="step-number">2</span> Ver sus Proyectos</h3>
+    <ol>
+        <li>En el dashboard, verá todos sus proyectos asignados</li>
+        <li>Click en cualquier proyecto para ver detalles</li>
+    </ol>
+    
+    <h3><span class="step-number">3</span> Descargar Documentos</h3>
+    <ol>
+        <li>Dentro de un proyecto, verá la lista de documentos</li>
+        <li>Click en cualquier documento para descargarlo</li>
+        <li>Los archivos se descargan directamente a su computadora</li>
+    </ol>
+    
+    <h3><span class="step-number">4</span> Cambiar Contraseña</h3>
+    <ol>
+        <li>Click en su perfil (esquina superior derecha)</li>
+        <li>Seleccionar "Cambiar Contraseña"</li>
+        <li>Ingresar contraseña actual y nueva contraseña</li>
+        <li>Confirmar cambio</li>
     </ol>
 </div>
 
-<hr>
+<div class="section">
+    <h2>🔧 Información Técnica (Para su Equipo de TI)</h2>
+    
+    <h3>Arquitectura del Sistema</h3>
+    <div class="tech-grid">
+        <div class="tech-card">
+            <h4>Frontend</h4>
+            <p><strong>Tecnología:</strong> React + TypeScript + Vite</p>
+            <p><strong>Hosting:</strong> [Vercel/Netlify/Lovable]</p>
+            <p><strong>URL:</strong> [URL-DEL-CLIENTE.com]</p>
+        </div>
+        
+        <div class="tech-card">
+            <h4>Backend</h4>
+            <p><strong>Base de datos:</strong> Supabase (PostgreSQL)</p>
+            <p><strong>Storage:</strong> Supabase Storage</p>
+            <p><strong>API:</strong> Edge Functions (Serverless)</p>
+        </div>
+    </div>
+    
+    <h3>Seguridad Implementada</h3>
+    <ul>
+        <li>✅ Autenticación con JWT</li>
+        <li>✅ Row Level Security (RLS) en base de datos</li>
+        <li>✅ Encriptación de datos en tránsito (HTTPS)</li>
+        <li>✅ Acceso basado en roles (Admin/Client)</li>
+    </ul>
+    
+    <h3>Acceso a Infraestructura</h3>
+    <p>Su equipo técnico tiene acceso completo a:</p>
+    
+    <table>
+        <tr>
+            <th>Componente</th>
+            <th>Descripción</th>
+        </tr>
+        <tr>
+            <td><strong>GitHub</strong></td>
+            <td>Repositorio de código fuente completo. Acceso: Push/Pull completo</td>
+        </tr>
+        <tr>
+            <td><strong>Supabase</strong></td>
+            <td>Base de datos, Storage, Edge Functions. Dashboard completo disponible</td>
+        </tr>
+        <tr>
+            <td><strong>Hosting</strong></td>
+            <td>Vercel/Netlify. Deploy automático desde GitHub</td>
+        </tr>
+    </table>
+    
+    <h3>Estructura de Base de Datos</h3>
+    <table>
+        <tr>
+            <th>Tabla</th>
+            <th>Descripción</th>
+        </tr>
+        <tr>
+            <td><code>companies</code></td>
+            <td>Empresas clientes del sistema</td>
+        </tr>
+        <tr>
+            <td><code>projects</code></td>
+            <td>Proyectos asociados a cada empresa</td>
+        </tr>
+        <tr>
+            <td><code>documents</code></td>
+            <td>Archivos y metadatos de documentos</td>
+        </tr>
+        <tr>
+            <td><code>user_roles</code></td>
+            <td>Permisos y roles de usuarios</td>
+        </tr>
+        <tr>
+            <td><code>auth.users</code></td>
+            <td>Usuarios del sistema (gestionada por Supabase)</td>
+        </tr>
+    </table>
+</div>
 
-<table>
-    <tr>
-        <th>Campo</th>
-        <th>Valor</th>
-    </tr>
-    <tr>
-        <td><strong>Fecha de Entrega</strong></td>
-        <td>[FECHA]</td>
-    </tr>
-    <tr>
-        <td><strong>Versión del Proyecto</strong></td>
-        <td>1.0.0</td>
-    </tr>
-    <tr>
-        <td><strong>Desarrollador</strong></td>
-        <td>[SU NOMBRE/EMPRESA]</td>
-    </tr>
-</table>
+<div class="section">
+    <h2>🔄 Actualizaciones y Mantenimiento</h2>
+    
+    <h3>Actualizaciones del Sistema</h3>
+    <p>El desarrollador puede enviar actualizaciones mediante:</p>
+    <ol>
+        <li>Pull Request al repositorio GitHub</li>
+        <li>Su equipo revisa y aprueba los cambios</li>
+        <li>Deploy automático una vez aprobado</li>
+    </ol>
+    
+    <h3>Respaldo de Datos</h3>
+    <ul>
+        <li>✅ Supabase realiza backups automáticos diarios</li>
+        <li>✅ Retención: 7 días (Plan Free) / 30 días (Plan Pro)</li>
+        <li>✅ Recomendación: Backups manuales adicionales para datos críticos</li>
+    </ul>
+    
+    <h3>Monitoreo</h3>
+    <ul>
+        <li>Dashboard de Supabase: Ver logs y estadísticas</li>
+        <li>Alertas automáticas de errores</li>
+        <li>Monitoreo de uso de recursos</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>📊 Límites y Escalabilidad</h2>
+    
+    <h3>Plan Actual: Supabase Free Tier</h3>
+    <table>
+        <tr>
+            <th>Recurso</th>
+            <th>Límite</th>
+        </tr>
+        <tr>
+            <td>Base de datos</td>
+            <td>500 MB</td>
+        </tr>
+        <tr>
+            <td>Storage</td>
+            <td>1 GB</td>
+        </tr>
+        <tr>
+            <td>Bandwidth</td>
+            <td>2 GB/mes</td>
+        </tr>
+        <tr>
+            <td>Edge Functions</td>
+            <td>500,000 invocaciones/mes</td>
+        </tr>
+    </table>
+    
+    <h3>¿Cuándo actualizar a Plan Pro ($25/mes)?</h3>
+    <ul>
+        <li>Más de 500 MB de datos en base de datos</li>
+        <li>Más de 1 GB de archivos almacenados</li>
+        <li>Más de 50 usuarios activos simultáneos</li>
+        <li>Necesidad de backups con mayor retención</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>🔐 Políticas de Seguridad</h2>
+    
+    <h3>Contraseñas</h3>
+    <ul>
+        <li>Mínimo 8 caracteres</li>
+        <li>Cambio obligatorio en primer login</li>
+        <li>No compartir credenciales</li>
+    </ul>
+    
+    <h3>Datos Sensibles</h3>
+    <ul>
+        <li>Todos los datos encriptados en tránsito</li>
+        <li>Acceso basado en roles estricto</li>
+        <li>Auditoría de accesos disponible</li>
+    </ul>
+    
+    <h3>Recomendaciones</h3>
+    <div class="success-box">
+        <ul style="margin: 0;">
+            <li>✅ Cambiar contraseñas cada 90 días</li>
+            <li>✅ No usar la misma contraseña en múltiples servicios</li>
+            <li>✅ Habilitar 2FA cuando esté disponible</li>
+            <li>✅ Revisar logs de acceso regularmente</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🆘 Soporte y Asistencia</h2>
+    
+    <h3>Para Dudas de Uso</h3>
+    <ul>
+        <li>Consultar este manual</li>
+        <li>Contactar al administrador del sistema</li>
+    </ul>
+    
+    <h3>Para Soporte Técnico</h3>
+    <ul>
+        <li><strong>Nuevas funcionalidades:</strong> Contactar al desarrollador</li>
+        <li><strong>Problemas de infraestructura:</strong> Su equipo de TI tiene acceso completo</li>
+    </ul>
+    
+    <h3>Para Emergencias</h3>
+    <ol>
+        <li>Verificar estado del sistema en dashboards</li>
+        <li>Revisar logs en Supabase</li>
+        <li>Contactar soporte de Supabase si es necesario</li>
+    </ol>
+</div>
+
+<div class="section">
+    <h2>📝 Changelog (Historial de Versiones)</h2>
+    
+    <h3>v1.0.0 - [FECHA]</h3>
+    <ul>
+        <li>✅ Sistema de autenticación (Admin y Cliente)</li>
+        <li>✅ Gestión de empresas y proyectos</li>
+        <li>✅ Upload y descarga de documentos</li>
+        <li>✅ Panel de administración completo</li>
+        <li>✅ Dashboard de cliente</li>
+        <li>✅ Sistema de roles y permisos</li>
+    </ul>
+</div>
+
+<div class="contact-box">
+    <h2>📞 Contacto</h2>
+    <p><strong>Desarrollador:</strong> [SU NOMBRE/EMPRESA]</p>
+    <p><strong>Email:</strong> [su-email@ejemplo.com]</p>
+    <p><strong>Fecha de Entrega:</strong> [FECHA]</p>
+    <p><strong>Versión:</strong> 1.0.0</p>
+    <p style="margin-top: 30px; font-size: 1.2em;">¡Gracias por confiar en SmartClarity Document Portal!</p>
+</div>
 
 </body>
 </html>

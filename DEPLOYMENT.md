@@ -1,281 +1,257 @@
-# Guía de Implementación - SmartClarity Document Portal
+# Manual de Usuario - SmartClarity Document Portal
 
-## 📋 Resumen
+## 👋 Bienvenido a su Portal de Documentos
 
-Este documento describe los pasos necesarios para implementar y tomar control del proyecto SmartClarity Document Portal en su propia infraestructura.
-
----
-
-## 🚀 Pasos de Implementación
-
-### 1. Obtener el Código (GitHub)
-
-**Opción A - Fork del Repositorio (Recomendado)**
-1. Ir al repositorio original en GitHub
-2. Hacer clic en el botón "Fork" (esquina superior derecha)
-3. Seleccionar su cuenta/organización de GitHub
-4. Clonar su fork localmente:
-   ```bash
-   git clone https://github.com/SU-ORGANIZACION/nombre-del-repo.git
-   cd nombre-del-repo
-   ```
-
-**Opción B - Transferencia Directa**
-1. Si prefieren que se les transfiera el repositorio directamente, coordinar con el desarrollador
+Este manual le guiará en el uso y administración de su nuevo sistema de gestión documental SmartClarity. El sistema ya ha sido configurado y está listo para usar.
 
 ---
 
-### 2. Configurar Supabase (Base de Datos + Storage)
+## 🌐 Acceso al Sistema
 
-#### 2.1 Crear Proyecto en Supabase
-1. Ir a [https://supabase.com](https://supabase.com)
-2. Crear cuenta o iniciar sesión
-3. Click en "New Project"
-4. Completar:
-   - **Organization**: Su organización
-   - **Project Name**: smartclarity-portal (o el nombre que prefieran)
-   - **Database Password**: Guardar en lugar seguro
-   - **Region**: Seleccionar la más cercana (e.g., South America)
-5. Esperar 1-2 minutos mientras se crea el proyecto
+### URL de Acceso
+Su portal está disponible en: **[URL-DEL-CLIENTE.com]**
 
-#### 2.2 Ejecutar Migraciones de Base de Datos
-1. En Supabase Dashboard, ir a **SQL Editor**
-2. Ejecutar las migraciones en orden (archivos en `supabase/migrations/`):
+### Credenciales Iniciales de Administrador
+- **Email**: [admin@suempresa.com]
+- **Contraseña**: [Proporcionada de forma segura]
 
-   **Primera migración - Estructura base:**
-   ```sql
-   -- Copiar y ejecutar el contenido del archivo:
-   -- supabase/migrations/20240101000000_initial_schema.sql
-   ```
-
-   **Migraciones adicionales:**
-   ```sql
-   -- Ejecutar cada archivo .sql en orden cronológico
-   -- (revisar carpeta supabase/migrations/)
-   ```
-
-3. Verificar que las tablas se crearon:
-   - `companies`
-   - `projects`
-   - `documents`
-   - `user_roles`
-
-#### 2.3 Configurar Storage (Almacenamiento de Archivos)
-1. En Supabase Dashboard, ir a **Storage**
-2. El bucket `documents` debería estar creado por las migraciones
-3. Verificar las políticas RLS del bucket
-
-#### 2.4 Obtener Credenciales de Supabase
-1. En Supabase Dashboard, ir a **Settings** → **API**
-2. Copiar:
-   - **Project URL** (e.g., `https://xxxxx.supabase.co`)
-   - **Project Reference ID** (e.g., `xxxxx`)
-   - **anon/public key** (empieza con `eyJ...`)
-   - **service_role key** (⚠️ NUNCA exponer públicamente)
+⚠️ **IMPORTANTE**: Cambie su contraseña en el primer inicio de sesión.
 
 ---
 
-### 3. Configurar Variables del Proyecto
+## 📱 Funcionalidades del Sistema
 
-#### 3.1 Actualizar Credenciales en el Código
-Editar el archivo `src/integrations/supabase/client.ts`:
+### Para Administradores
+✅ Crear y gestionar empresas clientes  
+✅ Crear proyectos para cada empresa  
+✅ Subir documentos organizados por proyecto  
+✅ Crear usuarios (clientes) y asignarlos a empresas  
+✅ Gestionar accesos y permisos  
+✅ Ver toda la actividad del sistema
 
-```typescript
-const SUPABASE_URL = "https://SU-PROJECT-ID.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "SU-ANON-KEY-AQUI";
-```
-
-#### 3.2 Configurar Secrets en Supabase (para Edge Functions)
-1. En Supabase Dashboard, ir a **Settings** → **Edge Functions**
-2. Agregar los siguientes secrets:
-   - `SUPABASE_URL`: Su Project URL
-   - `SUPABASE_ANON_KEY`: Su anon/public key
-   - `SUPABASE_SERVICE_ROLE_KEY`: Su service role key
-   - `RESEND_API_KEY`: (si usan emails) API key de Resend.com
+### Para Clientes (Empresas)
+✅ Ver sus proyectos asignados  
+✅ Descargar documentos de sus proyectos  
+✅ Visualizar información de sus empresas  
+✅ Acceso seguro solo a su información
 
 ---
 
-### 4. Desplegar Edge Functions
+## 🚀 Guía de Uso - Administrador
 
-Las Edge Functions son necesarias para la administración de usuarios.
+### 1. Primer Inicio de Sesión
+1. Acceder a **[URL]/admin-login**
+2. Ingresar con las credenciales proporcionadas
+3. Cambiar contraseña inmediatamente
 
-#### 4.1 Instalar Supabase CLI
-```bash
-# macOS
-brew install supabase/tap/supabase
+### 2. Crear una Empresa Cliente
+1. Ir al panel de administración
+2. Click en "Crear Empresa"
+3. Completar:
+   - **Nombre de la empresa**: Nombre completo
+   - **Email**: Email corporativo del cliente
+4. Click en "Guardar"
 
-# Windows (con Scoop)
-scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-scoop install supabase
+### 3. Crear un Usuario para la Empresa
+1. En el panel de administración
+2. Click en "Crear Usuario"
+3. Completar:
+   - **Email**: Email del usuario cliente (debe coincidir con el email de la empresa)
+   - **Contraseña temporal**: El sistema generará una
+4. Enviar credenciales al cliente de forma segura
 
-# Linux
-brew install supabase/tap/supabase
-```
+### 4. Crear Proyectos
+1. Panel de administración → "Proyectos"
+2. Click en "Nuevo Proyecto"
+3. Completar:
+   - **Nombre del proyecto**: Identificador claro
+   - **Empresa asociada**: Seleccionar de la lista
+   - **Descripción**: (Opcional) Detalles del proyecto
+4. Click en "Crear"
 
-#### 4.2 Desplegar Functions
-```bash
-# Login a Supabase
-supabase login
+### 5. Subir Documentos
+1. Seleccionar un proyecto
+2. Click en "Subir Documento"
+3. Seleccionar archivo desde su computadora
+4. Completar información:
+   - **Nombre del documento**: Nombre descriptivo
+   - **Tipo de documento**: Categoría (contrato, plano, certificado, etc.)
+5. Click en "Subir"
 
-# Link al proyecto
-supabase link --project-ref SU-PROJECT-ID
-
-# Desplegar todas las functions
-supabase functions deploy admin-create-user
-supabase functions deploy admin-delete-user
-supabase functions deploy admin-update-password
-supabase functions deploy admin-assign-role
-supabase functions deploy admin-get-current-user
-supabase functions deploy send-support-email
-supabase functions deploy create-admin-user
-supabase functions deploy bootstrap-admin
-supabase functions deploy setup-admin
-supabase functions deploy setup-complete-system
-```
-
----
-
-### 5. Crear Usuario Administrador Inicial
-
-#### Opción A - Usando Edge Function (Recomendado)
-```bash
-curl -X POST \
-  https://SU-PROJECT-ID.supabase.co/functions/v1/bootstrap-admin \
-  -H "Authorization: Bearer SU-ANON-KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@suempresa.com",
-    "password": "Password123!",
-    "role": "admin"
-  }'
-```
-
-#### Opción B - Desde Supabase Dashboard
-1. Ir a **Authentication** → **Users**
-2. Click "Add user" → "Create new user"
-3. Ingresar email y password
-4. Luego ir a **SQL Editor** y ejecutar:
-```sql
-INSERT INTO user_roles (user_id, role)
-VALUES (
-  (SELECT id FROM auth.users WHERE email = 'admin@suempresa.com'),
-  'admin'
-);
-```
+**Formatos soportados**: PDF, Word, Excel, Imágenes (JPG, PNG), AutoCAD (DWG), etc.
 
 ---
 
-### 6. Desplegar la Aplicación
+## 👤 Guía de Uso - Cliente
 
-#### 6.1 Instalar Dependencias
-```bash
-npm install
-# o
-bun install
-```
+### 1. Acceso al Portal
+1. Ir a **[URL-DEL-CLIENTE.com]**
+2. Click en "Iniciar Sesión"
+3. Ingresar email y contraseña proporcionados
 
-#### 6.2 Opción de Hosting
+### 2. Ver sus Proyectos
+1. En el dashboard, verá todos sus proyectos asignados
+2. Click en cualquier proyecto para ver detalles
 
-**Opción A - Vercel (Recomendado para React)**
-1. Ir a [vercel.com](https://vercel.com)
-2. Importar su repositorio de GitHub
-3. Framework preset: **Vite**
-4. Deploy
+### 3. Descargar Documentos
+1. Dentro de un proyecto, verá la lista de documentos
+2. Click en cualquier documento para descargarlo
+3. Los archivos se descargan directamente a su computadora
 
-**Opción B - Netlify**
-1. Ir a [netlify.com](https://netlify.com)
-2. New site from Git
-3. Build command: `npm run build`
-4. Publish directory: `dist`
-
-**Opción C - Lovable (con Custom Domain)**
-- Si prefieren hosting en Lovable con su dominio personalizado
-- Requiere Lovable Pro Plan ($25/mes)
+### 4. Cambiar Contraseña
+1. Click en su perfil (esquina superior derecha)
+2. Seleccionar "Cambiar Contraseña"
+3. Ingresar contraseña actual y nueva contraseña
+4. Confirmar cambio
 
 ---
 
-### 7. Configurar Dominio Personalizado
+## 🔧 Información Técnica (Para su Equipo de TI)
 
-#### En Vercel:
-1. Settings → Domains
-2. Agregar su dominio
-3. Configurar DNS según instrucciones
+### Arquitectura del Sistema
 
-#### En Netlify:
-1. Domain settings → Add custom domain
-2. Configurar DNS según instrucciones
+**Frontend**:
+- Tecnología: React + TypeScript + Vite
+- Hosting: [Vercel/Netlify/Lovable]
+- URL: [URL-DEL-CLIENTE.com]
 
----
+**Backend**:
+- Base de datos: Supabase (PostgreSQL)
+- Storage: Supabase Storage
+- API: Edge Functions (Serverless)
 
-## 🔄 Flujo de Actualizaciones Futuras
+**Seguridad**:
+- ✅ Autenticación con JWT
+- ✅ Row Level Security (RLS) en base de datos
+- ✅ Encriptación de datos en tránsito (HTTPS)
+- ✅ Acceso basado en roles (Admin/Client)
 
-### Cuando se requieran nuevas funcionalidades:
+### Acceso a Infraestructura
 
-1. **Desarrollador** trabaja en su ambiente Lovable
-2. Cambios se sincronizan automáticamente a su repositorio GitHub
-3. **Desarrollador** crea Pull Request desde su repo → fork de ustedes
-4. **Sus ingenieros** revisan el PR:
-   - Cambios de código
-   - Nuevas migraciones SQL (si las hay)
-   - Documentación de cambios
-5. **Sus ingenieros** aprueban y hacen merge
-6. Si hay migraciones de DB:
-   - Ejecutarlas en su Supabase (SQL Editor)
-   - O usar `supabase db push` con CLI
-7. Deploy automático se activa (Vercel/Netlify)
+Su equipo técnico tiene acceso completo a:
 
----
+1. **Repositorio de Código (GitHub)**
+   - URL: [REPO-URL]
+   - Acceso: Push/Pull completo
+   - Branch principal: `main`
 
-## 📊 Estructura del Proyecto
+2. **Base de Datos (Supabase)**
+   - Dashboard: [https://supabase.com/dashboard/project/SU-PROJECT-ID]
+   - Credenciales enviadas de forma segura
+   - Backups automáticos habilitados
 
-```
-smartclarity-portal/
-├── src/
-│   ├── components/        # Componentes React
-│   ├── pages/            # Páginas principales
-│   ├── hooks/            # Custom hooks (useAuth, etc.)
-│   ├── integrations/     # Cliente Supabase
-│   └── lib/              # Utilidades
-├── supabase/
-│   ├── functions/        # Edge Functions
-│   └── migrations/       # Scripts SQL de base de datos
-└── public/               # Assets estáticos
-```
+3. **Hosting (Vercel/Netlify)**
+   - Dashboard: [URL del hosting]
+   - Deploy automático desde GitHub
+   - SSL automático configurado
 
----
+### Estructura de la Base de Datos
 
-## 🔐 Seguridad - Checklist
+**Tablas principales**:
+- `companies`: Empresas clientes
+- `projects`: Proyectos por empresa
+- `documents`: Archivos y metadatos
+- `user_roles`: Permisos de usuarios
+- `auth.users`: Usuarios del sistema (gestionada por Supabase)
 
-- [ ] Service Role Key de Supabase NUNCA en código público
-- [ ] Service Role Key solo en Supabase Edge Functions secrets
-- [ ] Row Level Security (RLS) habilitado en todas las tablas
-- [ ] Políticas RLS revisadas y probadas
-- [ ] Bucket de storage con políticas correctas
-- [ ] Solo admin puede acceder a panel de administración
-- [ ] Usuarios solo ven sus propios proyectos/documentos
+**Storage**:
+- Bucket: `documents` (privado)
+- Políticas RLS configuradas
 
 ---
 
-## 📞 Soporte Post-Entrega
+## 🔄 Actualizaciones y Mantenimiento
 
-Para consultas sobre nuevas funcionalidades o upgrades, contactar al desarrollador.
+### Actualizaciones del Sistema
+El desarrollador puede enviar actualizaciones mediante:
+1. Pull Request al repositorio GitHub
+2. Su equipo revisa y aprueba los cambios
+3. Deploy automático una vez aprobado
 
-Para issues técnicos de infraestructura (Supabase, hosting), su equipo de ingenieros tiene acceso completo a:
-- GitHub repository (código fuente)
-- Supabase project (base de datos, storage, functions)
-- Hosting platform (Vercel/Netlify)
+### Respaldo de Datos
+- ✅ Supabase realiza backups automáticos diarios
+- ✅ Retención: 7 días (Plan Free) / 30 días (Plan Pro)
+- ✅ Recomendación: Backups manuales adicionales para datos críticos
+
+### Monitoreo
+- Dashboard de Supabase: Ver logs y estadísticas
+- Alertas automáticas de errores
+- Monitoreo de uso de recursos
 
 ---
 
-## 📝 Notas Importantes
+## 📊 Límites y Escalabilidad
 
-1. **Backup de Base de Datos**: Supabase hace backups automáticos (Plan Pro), pero recomendamos backups adicionales para producción
-2. **Monitoreo**: Revisar logs en Supabase Dashboard → Edge Functions → Logs
-3. **Escalabilidad**: Plan Free de Supabase: hasta 500MB DB, 1GB storage, 2GB bandwidth. Para crecer, considerar Plan Pro ($25/mes)
-4. **Actualizaciones de Seguridad**: Revisar dependencias regularmente con `npm audit`
+### Plan Actual: Supabase Free Tier
+- **Base de datos**: 500 MB
+- **Storage**: 1 GB
+- **Bandwidth**: 2 GB/mes
+- **Edge Functions**: 500,000 invocaciones/mes
+
+### ¿Cuándo actualizar a Plan Pro ($25/mes)?
+- Más de 500 MB de datos en base de datos
+- Más de 1 GB de archivos almacenados
+- Más de 50 usuarios activos simultáneos
+- Necesidad de backups con mayor retención
 
 ---
 
-**Fecha de Entrega**: [FECHA]  
-**Versión del Proyecto**: 1.0.0  
-**Desarrollador**: [SU NOMBRE/EMPRESA]
+## 🆘 Soporte y Asistencia
+
+### Para Dudas de Uso
+- Consultar este manual
+- Contactar al administrador del sistema
+
+### Para Soporte Técnico
+- Nuevas funcionalidades: Contactar al desarrollador
+- Problemas de infraestructura: Su equipo de TI tiene acceso completo
+
+### Para Emergencias
+1. Verificar estado del sistema en dashboards
+2. Revisar logs en Supabase
+3. Contactar soporte de Supabase si es necesario
+
+---
+
+## 🔐 Políticas de Seguridad
+
+### Contraseñas
+- Mínimo 8 caracteres
+- Cambio obligatorio en primer login
+- No compartir credenciales
+
+### Datos Sensibles
+- Todos los datos encriptados en tránsito
+- Acceso basado en roles estricto
+- Auditoría de accesos disponible
+
+### Recomendaciones
+✅ Cambiar contraseñas cada 90 días  
+✅ No usar la misma contraseña en múltiples servicios  
+✅ Habilitar 2FA cuando esté disponible  
+✅ Revisar logs de acceso regularmente
+
+---
+
+## 📞 Contacto
+
+**Desarrollador**: [SU NOMBRE/EMPRESA]  
+**Email**: [su-email@ejemplo.com]  
+**Entrega**: [FECHA]  
+**Versión**: 1.0.0
+
+---
+
+## 📝 Changelog (Historial de Versiones)
+
+### v1.0.0 - [FECHA]
+- ✅ Sistema de autenticación (Admin y Cliente)
+- ✅ Gestión de empresas y proyectos
+- ✅ Upload y descarga de documentos
+- ✅ Panel de administración completo
+- ✅ Dashboard de cliente
+- ✅ Sistema de roles y permisos
+
+---
+
+**¡Gracias por confiar en SmartClarity Document Portal!**
