@@ -27,10 +27,27 @@ serve(async (req) => {
       throw new Error("Usuario no encontrado");
     }
 
-    // Delete user
+    console.log('Deleting user:', user.id, user.email);
+
+    // First delete from user_roles table
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      console.error('Error deleting user role:', roleError);
+    }
+
+    // Then delete the auth user
     const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+
+    console.log('User deleted successfully');
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

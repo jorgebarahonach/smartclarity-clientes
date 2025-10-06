@@ -10,11 +10,11 @@ export function Toaster() {
     
     switch (variant) {
       case 'success':
-        return <CheckCircle2 {...iconProps} style={{ color: 'hsl(var(--action-green))' }} />;
+        return <CheckCircle2 {...iconProps} className="h-12 w-12 mb-2 text-action-green" />;
       case 'warning':
-        return <AlertTriangle {...iconProps} style={{ color: 'hsl(var(--action-yellow))' }} />;
+        return <AlertTriangle {...iconProps} className="h-12 w-12 mb-2 text-action-yellow" />;
       case 'destructive':
-        return <AlertCircle {...iconProps} style={{ color: 'hsl(var(--action-red))' }} />;
+        return <AlertCircle {...iconProps} className="h-12 w-12 mb-2 text-action-red" />;
       default:
         return null;
     }

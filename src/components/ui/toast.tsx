@@ -28,9 +28,9 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "bg-muted text-foreground",
-        success: "bg-[hsl(var(--toast-success-bg))] text-[hsl(var(--toast-success-fg))]",
-        warning: "bg-[hsl(var(--toast-warning-bg))] text-[hsl(var(--toast-warning-fg))]",
-        destructive: "bg-[hsl(var(--toast-error-bg))] text-[hsl(var(--toast-error-fg))]",
+        success: "bg-toast-success-bg text-toast-success-fg",
+        warning: "bg-toast-warning-bg text-toast-warning-fg",
+        destructive: "bg-toast-error-bg text-toast-error-fg",
       },
     },
     defaultVariants: {

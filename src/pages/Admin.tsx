@@ -22,7 +22,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown, Edit2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -59,6 +59,7 @@ type AdminUser = {
   email: string
   firstName?: string
   lastName?: string
+  password?: string
   created_at: string
 }
 
@@ -81,6 +82,7 @@ export default function Admin() {
   const [newAdmin, setNewAdmin] = useState({ email: '', password: '', firstName: '', lastName: '' })
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null)
   const [showPasswordReset, setShowPasswordReset] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [showNewCompanyForm, setShowNewCompanyForm] = useState(false)
@@ -580,6 +582,37 @@ export default function Admin() {
     }
   }
 
+  const handleUpdateAdmin = async (admin: AdminUser) => {
+    try {
+      const { error } = await supabase.functions.invoke('bootstrap-admin', {
+        body: { 
+          email: admin.email,
+          password: admin.password || undefined,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          role: 'admin'
+        }
+      })
+
+      if (error) throw error
+
+      toast({
+        variant: "success",
+        title: "Éxito",
+        description: "Administrador actualizado correctamente",
+      })
+
+      setEditingAdmin(null)
+      loadData()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "No se pudo actualizar el administrador",
+      })
+    }
+  }
+
   const handleDeleteAdmin = async (adminEmail: string) => {
     try {
       // Delete user via edge function
@@ -762,42 +795,98 @@ export default function Admin() {
                 {admins.map((admin) => (
                   <Card key={admin.id}>
                     <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="default">Administrador</Badge>
+                      {editingAdmin?.id === admin.id ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`edit-firstName-${admin.id}`}>Nombre</Label>
+                              <Input
+                                id={`edit-firstName-${admin.id}`}
+                                value={editingAdmin.firstName || ''}
+                                onChange={(e) => setEditingAdmin({ ...editingAdmin, firstName: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`edit-lastName-${admin.id}`}>Apellido</Label>
+                              <Input
+                                id={`edit-lastName-${admin.id}`}
+                                value={editingAdmin.lastName || ''}
+                                onChange={(e) => setEditingAdmin({ ...editingAdmin, lastName: e.target.value })}
+                              />
+                            </div>
                           </div>
-                          {admin.firstName && admin.lastName && (
-                            <p className="font-medium">{admin.firstName} {admin.lastName}</p>
-                          )}
-                          <p className="text-sm text-muted-foreground">{admin.email}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Creado: {new Date(admin.created_at).toLocaleDateString('es-ES')}
-                          </p>
+                          <div>
+                            <Label htmlFor={`edit-email-${admin.id}`}>Correo</Label>
+                            <Input
+                              id={`edit-email-${admin.id}`}
+                              type="email"
+                              value={editingAdmin.email}
+                              onChange={(e) => setEditingAdmin({ ...editingAdmin, email: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`edit-password-${admin.id}`}>Nueva Contraseña (opcional)</Label>
+                            <Input
+                              id={`edit-password-${admin.id}`}
+                              type="password"
+                              placeholder="Dejar en blanco para mantener actual"
+                              value={editingAdmin.password || ''}
+                              onChange={(e) => setEditingAdmin({ ...editingAdmin, password: e.target.value })}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setEditingAdmin(null)}>
+                              Cancelar
+                            </Button>
+                            <Button onClick={() => handleUpdateAdmin(editingAdmin)}>
+                              Guardar
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {admin.email !== user?.email && (
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="default">Administrador</Badge>
+                            </div>
+                            {admin.firstName && admin.lastName && (
+                              <p className="font-medium">{admin.firstName} {admin.lastName}</p>
+                            )}
+                            <p className="text-sm text-muted-foreground">{admin.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Creado: {new Date(admin.created_at).toLocaleDateString('es-ES')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
                             <button
                               className="p-1.5 rounded hover:bg-muted"
-                              onClick={() => {
-                                setDeleteConfirm({ 
-                                  type: 'admin', 
-                                  id: admin.id, 
-                                  name: admin.firstName && admin.lastName 
-                                    ? `${admin.firstName} ${admin.lastName}` 
-                                    : admin.email,
-                                  email: admin.email
-                                })
-                              }}
+                              onClick={() => setEditingAdmin({ ...admin, password: '' })}
                             >
-                              <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                              <Edit2 className="h-4 w-4 text-primary" />
                             </button>
-                          )}
-                          {admin.email === user?.email && (
-                            <span className="text-xs text-muted-foreground">(Usted)</span>
-                          )}
+                            {admin.email !== user?.email && (
+                              <button
+                                className="p-1.5 rounded hover:bg-muted"
+                                onClick={() => {
+                                  setDeleteConfirm({ 
+                                    type: 'admin', 
+                                    id: admin.id, 
+                                    name: admin.firstName && admin.lastName 
+                                      ? `${admin.firstName} ${admin.lastName}` 
+                                      : admin.email,
+                                    email: admin.email
+                                  })
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                              </button>
+                            )}
+                            {admin.email === user?.email && (
+                              <span className="text-xs text-muted-foreground">(Usted)</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
