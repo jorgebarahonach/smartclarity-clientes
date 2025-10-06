@@ -50,19 +50,20 @@ export function Header({ showAdminAccess = false, onSignOut, title, variant = 'p
           </>
         ) : (
           <>
-            <div className="flex items-center gap-3">
+            <div className="flex-1">
               <img 
                 src={smartClarityLogo} 
                 alt="SmartClarity Logo" 
-                className="w-[250px] h-auto cursor-pointer"
-                onClick={() => navigate('/')}
+                className="w-[200px] h-auto"
               />
-              {title && (
-                <h1 className="text-lg font-semibold">{title}</h1>
-              )}
             </div>
+            {title && (
+              <h1 className="text-xl font-medium text-gray-900 absolute left-1/2 transform -translate-x-1/2">
+                {title}
+              </h1>
+            )}
             
-            <div className="flex items-center gap-2 h-8">
+            <div className="flex-1 flex justify-end items-center gap-2 h-8">
               {showAdminAccess && (
                 <Button 
                   onClick={() => navigate('/admin/login')} 
