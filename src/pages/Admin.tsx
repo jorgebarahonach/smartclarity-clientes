@@ -728,7 +728,6 @@ export default function Admin() {
                 <Button 
                   variant="default" 
                   onClick={() => setShowNewProjectForm(true)}
-                  className="bg-black text-white hover:bg-black/90"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Crear proyecto
@@ -793,7 +792,7 @@ export default function Admin() {
                 </Card>
               )}
 
-              <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
                 {projectsByCompany.map((company) => (
                   <Card key={company.id} className="p-6">
                     <div className="mb-4">
@@ -812,13 +811,12 @@ export default function Admin() {
                                   <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
                                 )}
                               </div>
-                              <Button
-                                variant="action-red"
-                                size="sm"
+                              <button
+                                className="p-1.5 rounded hover:bg-muted"
                                 onClick={() => confirmDeleteProject(project.id, project.name)}
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                              </button>
                             </div>
                           </Card>
                         ))
