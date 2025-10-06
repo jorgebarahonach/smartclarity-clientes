@@ -613,25 +613,28 @@ export default function Admin() {
     }
   }
 
-  const handleDeleteAdmin = async (adminEmail: string) => {
+  const handleDeleteAdmin = async (adminEmail: string, adminId: string) => {
     try {
-      // Delete user via edge function
-      await supabase.functions.invoke('admin-delete-user', {
-        body: { email: adminEmail }
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { email: adminEmail, userId: adminId }
       })
+
+      if (error) throw error
 
       toast({
         variant: "success",
         title: "Éxito",
-        description: `Administrador ${adminEmail} eliminado`,
+        description: `Administrador eliminado`,
       })
       
+      // Optimistic UI update
+      setAdmins(prev => prev.filter(a => a.id !== adminId))
       loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting admin:', error)
       toast({
         title: "Error",
-        description: "Error al eliminar el administrador",
+        description: error?.message || "Error al eliminar el administrador",
         variant: "destructive",
       })
     }
@@ -676,21 +679,21 @@ export default function Admin() {
             <AlertDialogCancel className="mt-0">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deleteConfirm.type === 'company') {
-                  handleDeleteCompany(deleteConfirm.id, deleteConfirm.email!, deleteConfirm.name)
-                } else if (deleteConfirm.type === 'project') {
-                  handleDeleteProject(deleteConfirm.id, deleteConfirm.name)
-                } else if (deleteConfirm.type === 'document') {
-                  handleDeleteDocument(deleteConfirm.id, deleteConfirm.filePath!, deleteConfirm.name)
-                } else if (deleteConfirm.type === 'admin') {
-                  handleDeleteAdmin(deleteConfirm.email!)
-                }
-                setDeleteConfirm({ type: null, id: '', name: '', email: '', filePath: '' })
-              }}
-              className="mt-0 bg-[hsl(var(--action-red))] hover:bg-[hsl(var(--action-red))]/90 text-white"
-            >
+              <AlertDialogAction
+                onClick={() => {
+                  if (deleteConfirm.type === 'company') {
+                    handleDeleteCompany(deleteConfirm.id, deleteConfirm.email!, deleteConfirm.name)
+                  } else if (deleteConfirm.type === 'project') {
+                    handleDeleteProject(deleteConfirm.id, deleteConfirm.name)
+                  } else if (deleteConfirm.type === 'document') {
+                    handleDeleteDocument(deleteConfirm.id, deleteConfirm.filePath!, deleteConfirm.name)
+                  } else if (deleteConfirm.type === 'admin') {
+                    handleDeleteAdmin(deleteConfirm.email!, deleteConfirm.id)
+                  }
+                  setDeleteConfirm({ type: null, id: '', name: '', email: '', filePath: '' })
+                }}
+                className="mt-0 bg-[hsl(var(--action-red))] hover:bg-[hsl(var(--action-red))]/90 text-white"
+              >
               Aceptar
             </AlertDialogAction>
           </AlertDialogFooter>

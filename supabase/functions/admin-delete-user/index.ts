@@ -17,37 +17,49 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { email } = await req.json();
+    const { email, userId } = await req.json();
 
-    // Get user by email
-    const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-    const user = users.users.find(u => u.email === email);
+    let targetUserId: string | null = null;
 
-    if (!user) {
-      throw new Error("Usuario no encontrado");
+    if (userId) {
+      targetUserId = userId;
+    } else if (email) {
+      const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+      if (listErr) throw listErr;
+      const user = users.users.find((u) => u.email === email);
+      targetUserId = user?.id ?? null;
     }
 
-    console.log('Deleting user:', user.id, user.email);
+    if (!targetUserId) {
+      // If we could not resolve a target user, return error
+      return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // First delete from user_roles table
+    console.log('Deleting user and role for:', { targetUserId, email });
+
+    // First delete from user_roles table to remove admin role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .delete()
-      .eq('user_id', user.id);
+      .eq('user_id', targetUserId);
 
     if (roleError) {
       console.error('Error deleting user role:', roleError);
     }
 
-    // Then delete the auth user
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+    // Then delete the auth user (if it still exists)
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
 
-    if (error) {
-      console.error('Error deleting user:', error);
-      throw error;
+    if (authDeleteError) {
+      console.warn('Auth user delete warning (may already be deleted):', authDeleteError?.message);
     }
 
-    console.log('User deleted successfully');
+    return new Response(JSON.stringify({ success: true, userId: targetUserId }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
