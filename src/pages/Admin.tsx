@@ -197,18 +197,33 @@ export default function Admin() {
   const handleDeleteCompany = async (companyId: string, companyEmail: string, companyName: string) => {
     try {
       // First, check if there are projects associated with this company
+      // First delete all projects associated with the company
       const { data: projects } = await supabase
         .from('projects')
         .select('id')
         .eq('company_id', companyId)
 
       if (projects && projects.length > 0) {
-        toast({
-          title: "Error",
-          description: "No se puede eliminar la empresa porque tiene proyectos asociados",
-          variant: "destructive",
-        })
-        return
+        // Delete all documents associated with each project
+        for (const project of projects) {
+          const { data: docs } = await supabase
+            .from('documents')
+            .select('file_path')
+            .eq('project_id', project.id)
+          
+          // Delete files from storage
+          if (docs && docs.length > 0) {
+            for (const doc of docs) {
+              await supabase.storage.from('documents').remove([doc.file_path])
+            }
+          }
+          
+          // Delete document records
+          await supabase.from('documents').delete().eq('project_id', project.id)
+        }
+        
+        // Delete all projects
+        await supabase.from('projects').delete().eq('company_id', companyId)
       }
 
       // Delete the company record
