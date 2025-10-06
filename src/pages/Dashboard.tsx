@@ -5,7 +5,12 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FolderOpen } from 'lucide-react'
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { FolderOpen, FileText, ChevronDown, Download } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -22,12 +27,25 @@ type Project = {
   company_id: string
 }
 
+type Document = {
+  id: string
+  name: string
+  document_type: string
+  file_path: string
+  original_file_name: string | null
+  project_id: string
+  created_at: string
+}
+
 export default function Dashboard() {
   const { user, signOut } = useAuth()
   const [company, setCompany] = useState<Company | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null)
+  const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
+  const [companyOpen, setCompanyOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -75,18 +93,25 @@ export default function Dashboard() {
 
       setProjects(projectsData || [])
 
-      // Get last document update date for this company
+      // Get all documents for these projects
       if (projectsData && projectsData.length > 0) {
         const projectIds = projectsData.map(p => p.id)
-        const { data: documentsData } = await supabase
+        
+        const { data: documentsData, error: documentsError } = await supabase
           .from('documents')
-          .select('created_at')
+          .select('*')
           .in('project_id', projectIds)
           .order('created_at', { ascending: false })
-          .limit(1)
 
-        if (documentsData && documentsData.length > 0) {
-          setLastUpdateDate(new Date(documentsData[0].created_at).toLocaleDateString('es-ES'))
+        if (documentsError) {
+          console.error('Error loading documents:', documentsError)
+        } else {
+          setDocuments(documentsData || [])
+          
+          // Get last document update date
+          if (documentsData && documentsData.length > 0) {
+            setLastUpdateDate(new Date(documentsData[0].created_at).toLocaleDateString('es-ES'))
+          }
         }
       }
     } catch (error) {
@@ -131,6 +156,27 @@ export default function Dashboard() {
     )
   }
 
+  const handleDownload = async (doc: Document) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(doc.file_path)
+
+      if (error) throw error
+
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = doc.original_file_name || doc.name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading file:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header variant="client" title="Portal de Clientes" />
@@ -148,44 +194,110 @@ export default function Dashboard() {
           )}
         </div>
 
-        {projects.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No hay proyectos disponibles</h3>
-              <p className="text-muted-foreground">
-                Contacte con el administrador para que le asignen proyectos.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <Card key={project.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
-                    <Badge variant="secondary">Proyecto</Badge>
+        <Card className="p-6">
+          {projects.length === 0 ? (
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">{company.name}</h3>
+              <span className="text-sm text-muted-foreground">(0 proyectos)</span>
+            </div>
+          ) : (
+            <Collapsible 
+              open={companyOpen}
+              onOpenChange={setCompanyOpen}
+            >
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">{company.name}</h3>
+                    <span className="text-sm text-muted-foreground">
+                      ({projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'})
+                    </span>
                   </div>
-                  {project.description && (
-                    <CardDescription>{project.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    onClick={() => navigate(`/project/${project.id}`)}
-                    className="w-full"
-                    variant="action-green"
-                    size="sm"
-                  >
-                    <FolderOpen className="mr-2 h-4 w-4" />
-                    Ver documentos
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  <ChevronDown 
+                    className={`h-5 w-5 text-muted-foreground transition-transform ${
+                      companyOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </div>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="space-y-3">
+                  {projects.map((project) => {
+                    const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                    const isOpen = !!openProjects[project.id]
+                    
+                    return (
+                      <Collapsible 
+                        key={project.id} 
+                        open={isOpen} 
+                        onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
+                      >
+                        <Card className="p-4">
+                          <CollapsibleTrigger className="w-full">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="text-left flex-1">
+                                <h4 className="font-medium">{project.name}</h4>
+                                {project.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                                )}
+                              </div>
+                              <ChevronDown 
+                                className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                  isOpen ? 'rotate-180' : ''
+                                }`}
+                              />
+                            </div>
+                          </CollapsibleTrigger>
+                          
+                          <CollapsibleContent>
+                            <div>
+                              {projectDocuments.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {projectDocuments.map((doc) => {
+                                    const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                        doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                    return (
+                                      <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4 text-muted-foreground" />
+                                            <p className="font-medium text-sm">{doc.name}</p>
+                                          </div>
+                                          <div className="flex items-center gap-2 mt-2">
+                                            <Badge variant="secondary" className="text-xs">
+                                              {doc.document_type}
+                                            </Badge>
+                                            <Badge variant="outline" className="text-xs">
+                                              .{fileExtension}
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          variant="action-green"
+                                          size="sm"
+                                          onClick={() => handleDownload(doc)}
+                                        >
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </CollapsibleContent>
+                        </Card>
+                      </Collapsible>
+                    )
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </Card>
       </main>
 
       <Footer />
