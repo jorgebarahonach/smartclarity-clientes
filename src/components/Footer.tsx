@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import smartClarityLogo from '@/assets/smartclarity-logo.png'
 import smartClarityLogoBlack from '@/assets/smartclarity-logo-black.png'
 
 export function Footer() {
+  const { isAdmin } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -97,17 +99,18 @@ export function Footer() {
             />
           </div>
           
-          <div className="text-right">
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="h-8 bg-gray-500 border-gray-500 text-white hover:bg-white hover:text-gray-500"
-                >
-                  No puedo acceder a mis documentos
-                </Button>
-              </DialogTrigger>
+          {!isAdmin && (
+            <div className="text-right">
+              <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="h-8 bg-gray-500 border-gray-500 text-white hover:bg-white hover:text-gray-500"
+                  >
+                    No puedo acceder a mis documentos
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Formulario de Contacto</DialogTitle>
@@ -192,6 +195,7 @@ export function Footer() {
               </DialogContent>
             </Dialog>
           </div>
+          )}
         </div>
       </div>
     </footer>
