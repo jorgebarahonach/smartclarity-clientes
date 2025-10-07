@@ -701,7 +701,7 @@ export default function Admin() {
       </AlertDialog>
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <Tabs defaultValue="companies" className="w-full">
+        <Tabs defaultValue="admins" className="w-full">
           <div className="flex items-center justify-between mb-6">
             <TabsList className="grid w-full max-w-3xl grid-cols-5">
               <TabsTrigger value="admins">Administradores</TabsTrigger>
