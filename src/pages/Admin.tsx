@@ -586,7 +586,7 @@ export default function Admin() {
 
           // Enviar notificación a cada empresa
           for (const companyId of uniqueCompanyIds) {
-            await supabase.functions.invoke('send-update-notification', {
+            const { data: notifData, error: notifError } = await supabase.functions.invoke('send-update-notification', {
               body: {
                 companyId,
                 documentName: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
@@ -594,6 +594,11 @@ export default function Admin() {
                 adminEmail: user.email,
               },
             })
+            if (notifError) {
+              console.error('Error enviando notificación:', notifError)
+              throw notifError
+            }
+            console.log('Respuesta notificación:', notifData)
           }
           console.log(`Notificaciones enviadas a ${uniqueCompanyIds.length} empresa(s)`)
         } catch (notifError) {

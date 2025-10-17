@@ -3,6 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Sender address: set RESEND_FROM secret to a verified domain email in Resend.
+// Falls back to onboarding@resend.dev for testing if not provided/verified.
+const FROM_ADDRESS = Deno.env.get("RESEND_FROM") || "onboarding@resend.dev";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +50,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Company not found');
     }
 
+    if (!company.email) {
+      throw new Error('Company email is missing');
+    }
+
     // Obtener emails de todos los administradores para CCO
     const { data: adminRoles, error: adminError } = await supabase
       .from('user_roles')
@@ -67,13 +74,14 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Error fetching admin users');
     }
 
-    const adminEmails = adminUsers
+    const adminEmails = (adminUsers || [])
       .filter(u => adminUserIds.includes(u.id))
       .map(u => u.email)
       .filter(Boolean) as string[];
 
     console.log('Sending notification to:', company.email);
     console.log('BCC to admins:', adminEmails);
+    console.log('Using FROM address:', FROM_ADDRESS);
 
     const documentType = isUrl ? 'URL' : 'Archivo';
     const portalLink = `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app') || 'https://smartclarity.lovable.app'}/dashboard`;
@@ -119,12 +127,18 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: `SmartClarity <${adminEmail}>`,
+      from: `SmartClarity <${FROM_ADDRESS}>`,
       to: [company.email],
       bcc: adminEmails,
+      reply_to: adminEmail || undefined,
       subject: "SmartClarity - Actualización de su Portal",
       html: emailHtml,
     });
+
+    if (emailResponse.error) {
+      console.error('Resend error:', emailResponse.error);
+      throw new Error(emailResponse.error.message || 'Error sending email');
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
@@ -136,9 +150,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-update-notification function:", error);
+    console.error("Error in send-update-notification function: ", error?.message || error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Unknown error' }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
