@@ -44,12 +44,12 @@ type Project = {
 
 type Document = {
   id: string
-  project_id: string
+  project_id?: string
   name: string
   original_file_name?: string
-  file_path: string
-  file_type: string
-  file_size: number
+  file_path?: string
+  file_type?: string
+  file_size?: number
   document_type: 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro'
   created_at: string
   projects?: { name: string }
@@ -58,6 +58,7 @@ type Document = {
   url_excerpt?: string
   url_publication_date?: string
   url_source?: string
+  projectIds?: string[]
 }
 
 type AdminUser = {
@@ -149,11 +150,16 @@ export default function Admin() {
         .select('*, companies(name)')
         .order('created_at', { ascending: false })
 
-      // Load documents with project info
+      // Load documents with document_projects relationships
       const { data: documentsData } = await supabase
         .from('documents')
-        .select('*, projects(name)')
+        .select('*')
         .order('created_at', { ascending: false })
+      
+      // Load document-project relationships
+      const { data: docProjectsData } = await supabase
+        .from('document_projects')
+        .select('document_id, project_id')
 
       // Load admin users
       const { data: adminRolesData } = await supabase
@@ -177,9 +183,18 @@ export default function Admin() {
 
       const adminUsers = await Promise.all(adminUsersPromises)
 
+      // Map documents with their project relationships
+      const docsWithProjects = (documentsData || []).map(doc => {
+        const projectRels = (docProjectsData || []).filter(dp => dp.document_id === doc.id)
+        return {
+          ...doc,
+          projectIds: projectRels.map(rel => rel.project_id)
+        }
+      })
+
       setCompanies(companiesData || [])
       setProjects(projectsData || [])
-      setDocuments(documentsData || [])
+      setDocuments(docsWithProjects)
       setAdmins(adminUsers || [])
     } catch (error) {
       console.error('Error loading data:', error)
@@ -1644,7 +1659,7 @@ export default function Admin() {
                           <CollapsibleContent>
                             <div className="space-y-3">
                               {company.projects.map((project) => {
-                                const projectDocuments = documents.filter(doc => doc.project_id === project.id)
+                                const projectDocuments = documents.filter(doc => doc.projectIds?.includes(project.id))
                                 const isOpen = !!openProjects[project.id] // default to closed
                                 
                                 return (
@@ -1677,8 +1692,10 @@ export default function Admin() {
                                           ) : (
                                             <div className="space-y-2">
                                               {projectDocuments.map((doc) => {
-                                                const fileExtension = doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                                    doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
+                                                const fileExtension = doc.is_url ? 'URL' : (
+                                                  doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                                                  doc.file_path?.split('.').pop()?.toUpperCase() || 'FILE'
+                                                )
                                                 return (
                                                   <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
                                                     <div className="flex-1">

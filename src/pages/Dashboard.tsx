@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { FolderOpen, FileText, ChevronDown, Download } from 'lucide-react'
+import { FolderOpen, FileText, ChevronDown, Download, ExternalLink } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -301,7 +301,11 @@ export default function Dashboard() {
                                     onClick={() => handleDownload(doc)}
                                     className="flex-shrink-0"
                                   >
-                                    <Download className="h-4 w-4" />
+                                    {doc.is_url ? (
+                                      <ExternalLink className="h-4 w-4" />
+                                    ) : (
+                                      <Download className="h-4 w-4" />
+                                    )}
                                   </Button>
                                 </div>
                               )
