@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, FileText, Image, File } from 'lucide-react'
+import { ArrowLeft, Download, FileText, Image, File, Link2 } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -26,6 +26,11 @@ type Document = {
   file_size: number
   document_type: 'manual' | 'plano' | 'archivo' | 'otro'
   created_at: string
+  is_url: boolean
+  url?: string
+  url_excerpt?: string
+  url_published_date?: string
+  url_source?: string
 }
 
 const getFileIcon = (fileType: string, documentType: string) => {
@@ -90,19 +95,35 @@ export default function ProjectView() {
 
       setProject(projectData)
 
-      // Get documents for this project
-      const { data: documentsData, error: documentsError } = await supabase
-        .from('documents')
-        .select('*')
+      // Get documents for this project via document_projects table
+      const { data: docProjectsData, error: docProjectsError } = await supabase
+        .from('document_projects')
+        .select('document_id')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
 
-      if (documentsError) {
-        console.error('Error loading documents:', documentsError)
+      if (docProjectsError) {
+        console.error('Error loading document relationships:', docProjectsError)
         return
       }
 
-      setDocuments(documentsData || [])
+      if (docProjectsData && docProjectsData.length > 0) {
+        const documentIds = docProjectsData.map(dp => dp.document_id)
+        
+        const { data: documentsData, error: documentsError } = await supabase
+          .from('documents')
+          .select('*')
+          .in('id', documentIds)
+          .order('created_at', { ascending: false })
+
+        if (documentsError) {
+          console.error('Error loading documents:', documentsError)
+          return
+        }
+
+        setDocuments(documentsData || [])
+      } else {
+        setDocuments([])
+      }
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -234,9 +255,27 @@ export default function ProjectView() {
                            <CardTitle className="text-sm font-medium leading-tight break-words">
                              {doc.name}
                            </CardTitle>
-                           <p className="text-xs text-muted-foreground mt-1">
-                             📎 Archivo original: {doc.original_file_name || doc.name}
-                           </p>
+                           {doc.is_url ? (
+                             <div className="mt-2 space-y-1">
+                               <p className="text-xs text-muted-foreground line-clamp-2">
+                                 🔗 {doc.url_excerpt || doc.url}
+                               </p>
+                               {doc.url_published_date && (
+                                 <p className="text-xs text-muted-foreground">
+                                   📅 {new Date(doc.url_published_date).toLocaleDateString('es-ES')}
+                                 </p>
+                               )}
+                               {doc.url_source && (
+                                 <p className="text-xs text-muted-foreground">
+                                   📰 {doc.url_source}
+                                 </p>
+                               )}
+                             </div>
+                           ) : (
+                             <p className="text-xs text-muted-foreground mt-1">
+                               📎 {doc.original_file_name || doc.name}
+                             </p>
+                           )}
                          </div>
                       </div>
                     </div>
@@ -247,24 +286,42 @@ export default function ProjectView() {
                         <Badge variant="secondary" className="text-xs">
                           {doc.document_type}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {formatFileSize(doc.file_size)}
-                        </Badge>
+                        {doc.is_url ? (
+                          <Badge variant="outline" className="text-xs">
+                            URL
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            {formatFileSize(doc.file_size)}
+                          </Badge>
+                        )}
                       </div>
                       
                       <p className="text-xs text-muted-foreground">
                         {new Date(doc.created_at).toLocaleDateString('es-ES')}
                       </p>
                       
-                      <Button 
-                        onClick={() => handleDownload(doc)}
-                        variant="action-green"
-                        size="sm"
-                        className="w-full"
-                      >
-                        <Download className="mr-2 h-3 w-3" />
-                        Descargar
-                      </Button>
+                      {doc.is_url ? (
+                        <Button 
+                          onClick={() => window.open(doc.url, '_blank')}
+                          variant="action-green"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <FileText className="mr-2 h-3 w-3" />
+                          Abrir URL
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => handleDownload(doc)}
+                          variant="action-green"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <Download className="mr-2 h-3 w-3" />
+                          Descargar
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

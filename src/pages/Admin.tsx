@@ -39,6 +39,7 @@ type Project = {
   description: string | null
   company_id: string
   companies?: Company
+  is_default?: boolean
 }
 
 type Document = {
@@ -52,6 +53,11 @@ type Document = {
   document_type: 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro'
   created_at: string
   projects?: { name: string }
+  is_url: boolean
+  url?: string
+  url_excerpt?: string
+  url_published_date?: string
+  url_source?: string
 }
 
 type AdminUser = {
@@ -89,10 +95,15 @@ export default function Admin() {
   const [showNewProjectForm, setShowNewProjectForm] = useState(false)
   const [showNewAdminForm, setShowNewAdminForm] = useState(false)
   const [uploadForm, setUploadForm] = useState({
-    project_id: '',
+    selectedProjects: [] as string[],
     document_type: 'archivo' as 'manual' | 'plano' | 'archivo' | 'normativa' | 'doc_oficial' | 'otro',
     document_name: '',
-    file: null as File | null
+    file: null as File | null,
+    is_url: false,
+    url: '',
+    url_excerpt: '',
+    url_published_date: '',
+    url_source: ''
   })
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: 'company' | 'project' | 'document' | 'admin' | null
@@ -462,49 +473,114 @@ export default function Admin() {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!uploadForm.file || !uploadForm.project_id) return
+    
+    if (uploadForm.selectedProjects.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar al menos un proyecto",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!uploadForm.is_url && !uploadForm.file) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un archivo",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (uploadForm.is_url && !uploadForm.url) {
+      toast({
+        title: "Error",
+        description: "Debe ingresar una URL",
+        variant: "destructive",
+      })
+      return
+    }
 
     setUploadLoading(true)
     try {
-      // Upload file to Supabase Storage
-      const fileExt = uploadForm.file.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-      const filePath = `${uploadForm.project_id}/${uploadForm.document_type}/${fileName}`
+      let filePath = ''
+      let fileType = ''
+      let fileSize = 0
+      
+      // Upload file to storage if not URL
+      if (!uploadForm.is_url && uploadForm.file) {
+        const fileExt = uploadForm.file.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        filePath = `shared/${uploadForm.document_type}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, uploadForm.file)
+
+        if (uploadError) throw uploadError
+        
+        fileType = uploadForm.file.type || 'application/octet-stream'
+        fileSize = uploadForm.file.size
+      }
+
+      // Create document record
+      const documentData = {
+        name: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file!.name),
+        original_file_name: uploadForm.file?.name,
+        file_path: filePath,
+        file_type: fileType,
+        file_size: fileSize,
+        document_type: uploadForm.document_type,
+        is_url: uploadForm.is_url,
+        url: uploadForm.is_url ? uploadForm.url : null,
+        url_excerpt: uploadForm.is_url ? uploadForm.url_excerpt : null,
+        url_published_date: uploadForm.is_url && uploadForm.url_published_date ? uploadForm.url_published_date : null,
+        url_source: uploadForm.is_url ? uploadForm.url_source : null
+      }
+
+      const { data: docData, error: docError } = await supabase
         .from('documents')
-        .upload(filePath, uploadForm.file)
+        .insert([documentData])
+        .select()
+        .single()
 
-      if (uploadError) throw uploadError
+      if (docError) throw docError
 
-      // Save document metadata to database
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert([{
-          project_id: uploadForm.project_id,
-          name: uploadForm.document_name || uploadForm.file.name,
-          original_file_name: uploadForm.file.name,
-          file_path: filePath,
-          file_type: uploadForm.file.type || 'application/octet-stream',
-          file_size: uploadForm.file.size,
-          document_type: uploadForm.document_type
-        }])
+      // Create document-project relationships
+      const documentProjects = uploadForm.selectedProjects.map(projectId => ({
+        document_id: docData.id,
+        project_id: projectId
+      }))
 
-      if (dbError) throw dbError
+      const { error: relError } = await supabase
+        .from('document_projects')
+        .insert(documentProjects)
+
+      if (relError) throw relError
 
       toast({
         variant: "success",
         title: "Éxito",
-        description: "Documento subido correctamente",
+        description: `${uploadForm.is_url ? 'URL' : 'Documento'} publicado en ${uploadForm.selectedProjects.length} proyecto(s)`,
       })
       
-      setUploadForm({ project_id: '', document_type: 'archivo', document_name: '', file: null })
+      setUploadForm({ 
+        selectedProjects: [],
+        document_type: 'archivo',
+        document_name: '',
+        file: null,
+        is_url: false,
+        url: '',
+        url_excerpt: '',
+        url_published_date: '',
+        url_source: ''
+      })
       loadData()
     } catch (error) {
-      console.error('Error uploading file:', error)
+      console.error('Error uploading:', error)
       toast({
         title: "Error",
-        description: "Error al subir el documento",
+        description: `Error al subir el ${uploadForm.is_url ? 'enlace' : 'documento'}`,
         variant: "destructive",
       })
     } finally {
@@ -1296,31 +1372,86 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upload" className="mt-6">
-            <Card className="max-w-[50%]">
+            <Card className="max-w-[60%]">
               <CardHeader>
-                <CardTitle>Subir Documento</CardTitle>
+                <CardTitle>Publicar Documento o URL</CardTitle>
+                <CardDescription>
+                  Sube archivos o URLs y publícalos en uno o más proyectos de empresas
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFileUpload} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="project">Empresa → Proyecto</Label>
-                    <Select 
-                      value={uploadForm.project_id} 
-                      onValueChange={(value) => setUploadForm(prev => ({ ...prev, project_id: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar proyecto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {projects.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.companies?.name} → {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Tipo de contenido */}
+                  <div className="flex items-center gap-4">
+                    <Label>Tipo de contenido:</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="content_type"
+                          checked={!uploadForm.is_url}
+                          onChange={() => setUploadForm(prev => ({ ...prev, is_url: false }))}
+                          className="w-4 h-4"
+                        />
+                        <span>Archivo</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="content_type"
+                          checked={uploadForm.is_url}
+                          onChange={() => setUploadForm(prev => ({ ...prev, is_url: true }))}
+                          className="w-4 h-4"
+                        />
+                        <span>URL</span>
+                      </label>
+                    </div>
                   </div>
 
+                  {/* Selección de proyectos */}
+                  <div className="space-y-2">
+                    <Label>Seleccionar proyectos (uno o más)</Label>
+                    <div className="border rounded-md p-3 max-h-[300px] overflow-y-auto space-y-2">
+                      {projectsByCompany.map((company) => (
+                        <div key={company.id} className="space-y-2">
+                          <div className="font-medium text-sm text-muted-foreground">{company.name}</div>
+                          {company.projects.map((project) => (
+                            <label 
+                              key={project.id} 
+                              className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-muted ${
+                                project.is_default ? 'bg-primary/5' : ''
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={uploadForm.selectedProjects.includes(project.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setUploadForm(prev => ({
+                                      ...prev,
+                                      selectedProjects: [...prev.selectedProjects, project.id]
+                                    }))
+                                  } else {
+                                    setUploadForm(prev => ({
+                                      ...prev,
+                                      selectedProjects: prev.selectedProjects.filter(id => id !== project.id)
+                                    }))
+                                  }
+                                }}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-sm">
+                                {project.name}
+                                {project.is_default && <span className="ml-2 text-xs text-primary">(Carpeta estratégica)</span>}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tipo de documento */}
                   <div className="space-y-2">
                     <Label htmlFor="type">Tipo de Documento</Label>
                     <Select 
@@ -1332,7 +1463,7 @@ export default function Admin() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background">
                         <SelectItem value="archivo">Archivo</SelectItem>
                         <SelectItem value="manual">Manual</SelectItem>
                         <SelectItem value="plano">Plano</SelectItem>
@@ -1343,45 +1474,125 @@ export default function Admin() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="file">
-                      Archivo
-                    </Label>
-                    <Input
-                      id="file"
-                      type="file"
-                      onChange={(e) => setUploadForm(prev => ({ 
-                        ...prev, 
-                        file: e.target.files?.[0] || null 
-                      }))}
-                      required
-                    />
-                  </div>
+                  {/* Campos condicionales según tipo de contenido */}
+                  {uploadForm.is_url ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="url">URL *</Label>
+                        <Input
+                          id="url"
+                          type="url"
+                          value={uploadForm.url}
+                          onChange={(e) => setUploadForm(prev => ({ 
+                            ...prev, 
+                            url: e.target.value 
+                          }))}
+                          placeholder="https://ejemplo.com/articulo"
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="document_name">Nombre del Documento/Apodo</Label>
-                    <Input
-                      id="document_name"
-                      type="text"
-                      value={uploadForm.document_name}
-                      onChange={(e) => setUploadForm(prev => ({ 
-                        ...prev, 
-                        document_name: e.target.value 
-                      }))}
-                      placeholder="Nombre personalizado para el documento (opcional)"
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="url_name">Nombre de la URL *</Label>
+                        <Input
+                          id="url_name"
+                          type="text"
+                          value={uploadForm.document_name}
+                          onChange={(e) => setUploadForm(prev => ({ 
+                            ...prev, 
+                            document_name: e.target.value 
+                          }))}
+                          placeholder="Ej: Guía de instalación oficial"
+                        />
+                      </div>
 
-                  <Button type="submit" disabled={uploadLoading || !uploadForm.file} variant="action-green">
+                      <div className="space-y-2">
+                        <Label htmlFor="url_excerpt">Extracto / Descripción</Label>
+                        <Input
+                          id="url_excerpt"
+                          type="text"
+                          value={uploadForm.url_excerpt}
+                          onChange={(e) => setUploadForm(prev => ({ 
+                            ...prev, 
+                            url_excerpt: e.target.value 
+                          }))}
+                          placeholder="Breve descripción del contenido"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="url_published_date">Fecha de Publicación</Label>
+                          <Input
+                            id="url_published_date"
+                            type="date"
+                            value={uploadForm.url_published_date}
+                            onChange={(e) => setUploadForm(prev => ({ 
+                              ...prev, 
+                              url_published_date: e.target.value 
+                            }))}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="url_source">Fuente</Label>
+                          <Input
+                            id="url_source"
+                            type="text"
+                            value={uploadForm.url_source}
+                            onChange={(e) => setUploadForm(prev => ({ 
+                              ...prev, 
+                              url_source: e.target.value 
+                            }))}
+                            placeholder="Ej: Blog oficial, Wikipedia"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="file">Archivo *</Label>
+                        <Input
+                          id="file"
+                          type="file"
+                          onChange={(e) => setUploadForm(prev => ({ 
+                            ...prev, 
+                            file: e.target.files?.[0] || null 
+                          }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="document_name">Nombre del Documento/Apodo</Label>
+                        <Input
+                          id="document_name"
+                          type="text"
+                          value={uploadForm.document_name}
+                          onChange={(e) => setUploadForm(prev => ({ 
+                            ...prev, 
+                            document_name: e.target.value 
+                          }))}
+                          placeholder="Nombre personalizado (opcional)"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    disabled={uploadLoading} 
+                    variant="action-green"
+                    className="w-full"
+                  >
                     {uploadLoading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Subiendo...
+                        Publicando...
                       </>
                     ) : (
                       <>
                         <Upload className="mr-2 h-4 w-4" />
-                        Subir Documento
+                        Publicar en {uploadForm.selectedProjects.length} proyecto(s)
                       </>
                     )}
                   </Button>
