@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import emailjs from '@emailjs/browser'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -584,21 +585,36 @@ export default function Admin() {
 
           const uniqueCompanyIds = [...new Set(selectedProjectsData?.map(p => p.company_id) || [])]
 
-          // Enviar notificación a cada empresa
+          // Enviar notificación a cada empresa usando EmailJS
           for (const companyId of uniqueCompanyIds) {
-            const { data: notifData, error: notifError } = await supabase.functions.invoke('send-update-notification', {
-              body: {
-                companyId,
-                documentName: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
-                isUrl: uploadForm.is_url,
-                adminEmail: user.email,
-              },
-            })
-            if (notifError) {
-              console.error('Error enviando notificación:', notifError)
-              throw notifError
+            const { data: company } = await supabase
+              .from('companies')
+              .select('name, email')
+              .eq('id', companyId)
+              .single();
+
+            if (company && company.email) {
+              const documentType = uploadForm.is_url ? 'URL' : 'Archivo';
+              const portalLink = window.location.origin + '/dashboard';
+
+              try {
+                await emailjs.send(
+                  'ayerviernes', // SERVICE_ID
+                  'template_noymxyo', // TEMPLATE_ID
+                  {
+                    company_name: company.name,
+                    document_name: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
+                    document_type: documentType,
+                    portal_link: portalLink,
+                    to_email: company.email,
+                  },
+                  '6wJfvoAA_w-mnkUnz' // USER_ID
+                );
+                console.log(`Email enviado a ${company.name}`);
+              } catch (emailError) {
+                console.error('Error enviando email:', emailError);
+              }
             }
-            console.log('Respuesta notificación:', notifData)
           }
           console.log(`Notificaciones enviadas a ${uniqueCompanyIds.length} empresa(s)`)
         } catch (notifError) {
