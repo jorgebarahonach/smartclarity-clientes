@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { FolderOpen, FileText, ChevronDown, Download, ExternalLink } from 'lucide-react'
+import { FolderOpen, FileText, ChevronDown, Download, ExternalLink, Link } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -269,16 +269,27 @@ export default function Dashboard() {
                           <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
                         ) : (
                           <div className="space-y-2">
-                            {projectDocuments.map((doc) => {
+                            {projectDocuments
+                              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                              .map((doc) => {
                               const fileExtension = doc.is_url ? 'URL' : (
                                 doc.original_file_name?.split('.').pop()?.toUpperCase() || 
                                 doc.file_path.split('.').pop()?.toUpperCase() || 'FILE'
                               )
+                              const docDate = new Date(doc.created_at).toLocaleDateString('es-ES', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })
                               return (
                                 <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                      {doc.is_url ? (
+                                        <Link className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                      ) : (
+                                        <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                      )}
                                       <p className="font-medium text-sm truncate">{doc.name}</p>
                                     </div>
                                     {doc.is_url && doc.url_excerpt && (
@@ -293,6 +304,9 @@ export default function Dashboard() {
                                       <Badge variant="outline" className="text-xs">
                                         {fileExtension}
                                       </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {docDate}
+                                      </span>
                                     </div>
                                   </div>
                                   <Button
