@@ -23,7 +23,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown, Edit2, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown, Edit2, ExternalLink, Download, Search, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -114,6 +114,17 @@ export default function Admin() {
     email?: string
     filePath?: string
   }>({ type: null, id: '', name: '', email: '', filePath: '' })
+
+  // Filtros y paginación para documentos
+  const [docFilters, setDocFilters] = useState({
+    searchName: '',
+    documentType: 'all',
+    projectId: 'all',
+    startDate: '',
+    endDate: ''
+  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const DOCS_PER_PAGE = 10
 
   useEffect(() => {
     if (authLoading) return
@@ -661,6 +672,39 @@ export default function Admin() {
     }
   }
 
+  const handleDownloadDocument = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath)
+
+      if (error) throw error
+
+      // Crear un blob y descargarlo
+      const url = URL.createObjectURL(data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast({
+        variant: "success",
+        title: "Éxito",
+        description: "Documento descargado correctamente",
+      })
+    } catch (error) {
+      console.error('Error downloading document:', error)
+      toast({
+        title: "Error",
+        description: "Error al descargar el documento",
+        variant: "destructive",
+      })
+    }
+  }
+
   const confirmDeleteDocument = (docId: string, docName: string, filePath: string | null) => {
     setDeleteConfirm({ type: 'document', id: docId, name: docName, filePath: filePath || '' })
   }
@@ -796,6 +840,50 @@ export default function Admin() {
     ...company,
     projects: projects.filter(project => project.company_id === company.id)
   }))
+
+  // Filtrar y paginar documentos
+  const filteredDocuments = documents.filter(doc => {
+    // Filtro por nombre
+    if (docFilters.searchName && !doc.name.toLowerCase().includes(docFilters.searchName.toLowerCase())) {
+      return false
+    }
+
+    // Filtro por tipo de documento
+    if (docFilters.documentType !== 'all' && doc.document_type !== docFilters.documentType) {
+      return false
+    }
+
+    // Filtro por proyecto
+    if (docFilters.projectId !== 'all' && !doc.projectIds?.includes(docFilters.projectId)) {
+      return false
+    }
+
+    // Filtro por rango de fechas
+    if (docFilters.startDate) {
+      const docDate = new Date(doc.created_at)
+      const startDate = new Date(docFilters.startDate)
+      if (docDate < startDate) return false
+    }
+
+    if (docFilters.endDate) {
+      const docDate = new Date(doc.created_at)
+      const endDate = new Date(docFilters.endDate)
+      endDate.setHours(23, 59, 59, 999) // Incluir todo el día final
+      if (docDate > endDate) return false
+    }
+
+    return true
+  })
+
+  // Paginación
+  const totalPages = Math.ceil(filteredDocuments.length / DOCS_PER_PAGE)
+  const startIndex = (currentPage - 1) * DOCS_PER_PAGE
+  const paginatedDocuments = filteredDocuments.slice(startIndex, startIndex + DOCS_PER_PAGE)
+
+  // Reset a página 1 cuando cambien los filtros
+  const resetPagination = () => {
+    setCurrentPage(1)
+  }
 
   // Show loading while checking authentication and permissions
   if (authLoading) {
@@ -1678,127 +1766,286 @@ export default function Admin() {
 
           <TabsContent value="documents" className="mt-6">
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                {projectsByCompany.map((company) => {
-                  const isCompanyOpen = !!openCompanies[company.id]; // default to closed
-                  
-                  return (
-                    <Card key={company.id} className="p-6">
-                      {company.projects.length === 0 ? (
-                        // Si no hay proyectos, solo mostrar el nombre sin collapsible
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-semibold">{company.name}</h3>
-                          <span className="text-sm text-muted-foreground">
-                            (0 proyectos)
-                          </span>
-                        </div>
-                      ) : (
-                        // Si hay proyectos, mostrar collapsible con flecha
-                        <Collapsible 
-                          open={isCompanyOpen}
-                          onOpenChange={(open) => setOpenCompanies(prev => ({ ...prev, [company.id]: open }))}
-                        >
-                          <CollapsibleTrigger className="w-full">
-                            <div className="flex items-center justify-between mb-4">
+              {/* Filtros de búsqueda */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    Filtros de Búsqueda
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="searchName">Nombre</Label>
+                      <div className="relative">
+                        <Input
+                          id="searchName"
+                          type="text"
+                          placeholder="Buscar por nombre..."
+                          value={docFilters.searchName}
+                          onChange={(e) => {
+                            setDocFilters(prev => ({ ...prev, searchName: e.target.value }))
+                            resetPagination()
+                          }}
+                        />
+                        {docFilters.searchName && (
+                          <button
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
+                            onClick={() => {
+                              setDocFilters(prev => ({ ...prev, searchName: '' }))
+                              resetPagination()
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="filterType">Tipo</Label>
+                      <Select 
+                        value={docFilters.documentType}
+                        onValueChange={(value) => {
+                          setDocFilters(prev => ({ ...prev, documentType: value }))
+                          resetPagination()
+                        }}
+                      >
+                        <SelectTrigger id="filterType">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background">
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="archivo">Archivo</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="plano">Plano</SelectItem>
+                          <SelectItem value="normativa">Normativa</SelectItem>
+                          <SelectItem value="doc_oficial">Doc. oficial</SelectItem>
+                          <SelectItem value="otro">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="filterProject">Proyecto</Label>
+                      <Select 
+                        value={docFilters.projectId}
+                        onValueChange={(value) => {
+                          setDocFilters(prev => ({ ...prev, projectId: value }))
+                          resetPagination()
+                        }}
+                      >
+                        <SelectTrigger id="filterProject">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background">
+                          <SelectItem value="all">Todos</SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Desde</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={docFilters.startDate}
+                        onChange={(e) => {
+                          setDocFilters(prev => ({ ...prev, startDate: e.target.value }))
+                          resetPagination()
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">Hasta</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={docFilters.endDate}
+                        onChange={(e) => {
+                          setDocFilters(prev => ({ ...prev, endDate: e.target.value }))
+                          resetPagination()
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Botón para limpiar filtros */}
+                  {(docFilters.searchName || docFilters.documentType !== 'all' || docFilters.projectId !== 'all' || docFilters.startDate || docFilters.endDate) && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setDocFilters({
+                            searchName: '',
+                            documentType: 'all',
+                            projectId: 'all',
+                            startDate: '',
+                            endDate: ''
+                          })
+                          resetPagination()
+                        }}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Limpiar filtros
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Resultados con información de paginación */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {paginatedDocuments.length > 0 ? startIndex + 1 : 0} - {Math.min(startIndex + DOCS_PER_PAGE, filteredDocuments.length)} de {filteredDocuments.length} documentos
+                </p>
+              </div>
+
+              {/* Lista de documentos */}
+              <div className="space-y-3">
+                {paginatedDocuments.length === 0 ? (
+                  <Alert>
+                    <AlertDescription>
+                      No se encontraron documentos con los filtros aplicados.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  paginatedDocuments.map((doc) => {
+                    const fileExtension = doc.is_url ? 'URL' : (
+                      doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                      doc.file_path?.split('.').pop()?.toUpperCase() || 'FILE'
+                    )
+                    const projectNames = doc.projectIds?.map(pid => 
+                      projects.find(p => p.id === pid)?.name
+                    ).filter(Boolean).join(', ') || 'Sin proyecto'
+
+                    return (
+                      <Card key={doc.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
                               <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-semibold">{company.name}</h3>
-                                <span className="text-sm text-muted-foreground">
-                                  ({company.projects.length} {company.projects.length === 1 ? 'proyecto' : 'proyectos'})
+                                {doc.is_url ? (
+                                  <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                ) : (
+                                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                )}
+                                <h4 className="font-medium">{doc.name}</h4>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {doc.document_type}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  .{fileExtension}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(doc.created_at).toLocaleDateString('es-ES')}
                                 </span>
                               </div>
-                              <ChevronDown 
-                                className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                  isCompanyOpen ? 'rotate-180' : ''
-                                }`}
-                              />
+
+                              <p className="text-xs text-muted-foreground">
+                                Proyectos: {projectNames}
+                              </p>
+
+                              {doc.is_url && doc.url && (
+                                <a 
+                                  href={doc.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                                >
+                                  {doc.url}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
                             </div>
-                          </CollapsibleTrigger>
-                          
-                          <CollapsibleContent>
-                            <div className="space-y-3">
-                              {company.projects.map((project) => {
-                                const projectDocuments = documents.filter(doc => doc.projectIds?.includes(project.id))
-                                const isOpen = !!openProjects[project.id] // default to closed
-                                
-                                return (
-                                  <Collapsible 
-                                    key={project.id} 
-                                    open={isOpen} 
-                                    onOpenChange={(open) => setOpenProjects(prev => ({ ...prev, [project.id]: open }))}
-                                  >
-                                    <Card className="p-4">
-                                      <CollapsibleTrigger className="w-full">
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className="text-left flex-1">
-                                            <h4 className="font-medium">{project.name}</h4>
-                                            {project.description && (
-                                              <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-                                            )}
-                                          </div>
-                                          <ChevronDown 
-                                            className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                              isOpen ? 'rotate-180' : ''
-                                            }`}
-                                          />
-                                        </div>
-                                      </CollapsibleTrigger>
-                                      
-                                      <CollapsibleContent>
-                                        <div>
-                                          {projectDocuments.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">No hay documentos en este proyecto</p>
-                                          ) : (
-                                            <div className="space-y-2">
-                                              {projectDocuments.map((doc) => {
-                                                const fileExtension = doc.is_url ? 'URL' : (
-                                                  doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                                                  doc.file_path?.split('.').pop()?.toUpperCase() || 'FILE'
-                                                )
-                                                return (
-                                                  <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                                                    <div className="flex-1">
-                                                      <div className="flex items-center gap-2">
-                                                        {doc.is_url ? (
-                                                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                                        ) : (
-                                                          <FileText className="h-4 w-4 text-muted-foreground" />
-                                                        )}
-                                                        <p className="font-medium text-sm">{doc.name}</p>
-                                                      </div>
-                                                      <div className="flex items-center gap-2 mt-2">
-                                                        <Badge variant="secondary" className="text-xs">
-                                                          {doc.document_type}
-                                                        </Badge>
-                                                        <Badge variant="outline" className="text-xs">
-                                                          .{fileExtension}
-                                                        </Badge>
-                                                      </div>
-                                                    </div>
-                                                    <button
-                                                      className="p-1.5 rounded hover:bg-muted"
-                                                      onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
-                                                    >
-                                                      <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                                                    </button>
-                                                  </div>
-                                                )
-                                              })}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </CollapsibleContent>
-                                    </Card>
-                                  </Collapsible>
-                                )
-                              })}
+
+                            <div className="flex items-center gap-2">
+                              {!doc.is_url && doc.file_path && (
+                                <button
+                                  className="p-1.5 rounded hover:bg-muted"
+                                  onClick={() => handleDownloadDocument(doc.file_path!, doc.original_file_name || doc.name)}
+                                  title="Descargar documento"
+                                >
+                                  <Download className="h-4 w-4 text-primary" />
+                                </button>
+                              )}
+                              <button
+                                className="p-1.5 rounded hover:bg-muted"
+                                onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                title="Eliminar documento"
+                              >
+                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
+                              </button>
                             </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      )}
-                    </Card>
-                  )
-                })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
               </div>
+
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Mostrar primeras 2, últimas 2 y las cercanas a la página actual
+                      const showPage = page === 1 || page === totalPages || 
+                                     (page >= currentPage - 1 && page <= currentPage + 1)
+                      
+                      if (!showPage && page === 2) {
+                        return <span key={page} className="px-2">...</span>
+                      }
+                      if (!showPage && page === totalPages - 1) {
+                        return <span key={page} className="px-2">...</span>
+                      }
+                      if (!showPage) return null
+
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="min-w-[40px]"
+                        >
+                          {page}
+                        </Button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
