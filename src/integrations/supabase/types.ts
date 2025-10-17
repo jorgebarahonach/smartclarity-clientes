@@ -84,6 +84,9 @@ export type Database = {
           original_file_name: string | null
           project_id: string | null
           url: string | null
+          url_excerpt: string | null
+          url_publication_date: string | null
+          url_source: string | null
         }
         Insert: {
           created_at?: string | null
@@ -97,6 +100,9 @@ export type Database = {
           original_file_name?: string | null
           project_id?: string | null
           url?: string | null
+          url_excerpt?: string | null
+          url_publication_date?: string | null
+          url_source?: string | null
         }
         Update: {
           created_at?: string | null
@@ -110,6 +116,9 @@ export type Database = {
           original_file_name?: string | null
           project_id?: string | null
           url?: string | null
+          url_excerpt?: string | null
+          url_publication_date?: string | null
+          url_source?: string | null
         }
         Relationships: [
           {
