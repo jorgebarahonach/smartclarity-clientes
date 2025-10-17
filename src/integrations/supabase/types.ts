@@ -35,39 +35,81 @@ export type Database = {
         }
         Relationships: []
       }
-      documents: {
+      document_projects: {
         Row: {
           created_at: string | null
-          document_type: string
-          file_path: string
-          file_size: number
-          file_type: string
+          document_id: string
           id: string
-          name: string
-          original_file_name: string | null
           project_id: string
         }
         Insert: {
           created_at?: string | null
-          document_type: string
-          file_path: string
-          file_size: number
-          file_type: string
+          document_id: string
           id?: string
-          name: string
-          original_file_name?: string | null
           project_id: string
         }
         Update: {
           created_at?: string | null
-          document_type?: string
-          file_path?: string
-          file_size?: number
-          file_type?: string
+          document_id?: string
           id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_projects_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_url: boolean
+          name: string
+          original_file_name: string | null
+          project_id: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_url?: boolean
+          name: string
+          original_file_name?: string | null
+          project_id?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_url?: boolean
           name?: string
           original_file_name?: string | null
-          project_id?: string
+          project_id?: string | null
+          url?: string | null
         }
         Relationships: [
           {
@@ -85,6 +127,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_default: boolean
           name: string
         }
         Insert: {
@@ -92,6 +135,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_default?: boolean
           name: string
         }
         Update: {
@@ -99,6 +143,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_default?: boolean
           name?: string
         }
         Relationships: [
