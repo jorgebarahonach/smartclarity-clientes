@@ -573,6 +573,35 @@ export default function Admin() {
 
       if (relError) throw relError
 
+      // Enviar notificación por correo a cada empresa afectada
+      if (uploadForm.selectedProjects.length > 0 && user?.email) {
+        try {
+          // Obtener las empresas únicas de los proyectos seleccionados
+          const { data: selectedProjectsData } = await supabase
+            .from('projects')
+            .select('company_id')
+            .in('id', uploadForm.selectedProjects)
+
+          const uniqueCompanyIds = [...new Set(selectedProjectsData?.map(p => p.company_id) || [])]
+
+          // Enviar notificación a cada empresa
+          for (const companyId of uniqueCompanyIds) {
+            await supabase.functions.invoke('send-update-notification', {
+              body: {
+                companyId,
+                documentName: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
+                isUrl: uploadForm.is_url,
+                adminEmail: user.email,
+              },
+            })
+          }
+          console.log(`Notificaciones enviadas a ${uniqueCompanyIds.length} empresa(s)`)
+        } catch (notifError) {
+          console.error('Error sending notification:', notifError)
+          // No bloqueamos el flujo si falla la notificación
+        }
+      }
+
       toast({
         variant: "success",
         title: "Éxito",
