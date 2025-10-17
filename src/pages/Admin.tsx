@@ -608,6 +608,7 @@ export default function Admin() {
         description: `${uploadForm.is_url ? 'URL' : 'Documento'} publicado en ${uploadForm.selectedProjects.length} proyecto(s)`,
       })
       
+      // Limpiar formulario y recargar datos
       setUploadForm({ 
         selectedProjects: [],
         document_type: 'archivo',
@@ -619,7 +620,14 @@ export default function Admin() {
         url_publication_date: '',
         url_source: ''
       })
-      loadData()
+      
+      // Resetear el input de archivo
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+      if (fileInput) {
+        fileInput.value = ''
+      }
+      
+      await loadData()
     } catch (error) {
       console.error('Error uploading:', error)
       toast({
