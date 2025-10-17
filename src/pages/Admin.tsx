@@ -600,7 +600,7 @@ export default function Admin() {
               try {
                 await emailjs.send(
                   'ayerviernes', // SERVICE_ID
-                  'template_noymxyo', // TEMPLATE_ID
+                  'template_4q7c2xa', // TEMPLATE_ID
                   {
                     company_name: company.name,
                     document_name: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
