@@ -22,7 +22,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown, Edit2 } from 'lucide-react'
+import { ArrowLeft, Upload, Trash2, Plus, Edit, FileText, AlertTriangle, ChevronDown, Edit2, ExternalLink } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -1729,7 +1729,11 @@ export default function Admin() {
                                                   <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
                                                     <div className="flex-1">
                                                       <div className="flex items-center gap-2">
-                                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                                        {doc.is_url ? (
+                                                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                                        ) : (
+                                                          <FileText className="h-4 w-4 text-muted-foreground" />
+                                                        )}
                                                         <p className="font-medium text-sm">{doc.name}</p>
                                                       </div>
                                                       <div className="flex items-center gap-2 mt-2">

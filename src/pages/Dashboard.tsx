@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { FolderOpen, FileText, ChevronDown, Download, ExternalLink, Link } from 'lucide-react'
+import { FolderOpen, FileText, ChevronDown, Download, ExternalLink } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -286,7 +286,7 @@ export default function Dashboard() {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                       {doc.is_url ? (
-                                        <Link className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                        <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                       ) : (
                                         <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                       )}
