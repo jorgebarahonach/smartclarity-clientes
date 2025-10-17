@@ -56,7 +56,7 @@ type Document = {
   is_url: boolean
   url?: string
   url_excerpt?: string
-  url_published_date?: string
+  url_publication_date?: string
   url_source?: string
 }
 
@@ -102,7 +102,7 @@ export default function Admin() {
     is_url: false,
     url: '',
     url_excerpt: '',
-    url_published_date: '',
+    url_publication_date: '',
     url_source: ''
   })
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -527,14 +527,14 @@ export default function Admin() {
       const documentData = {
         name: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file!.name),
         original_file_name: uploadForm.file?.name,
-        file_path: filePath,
-        file_type: fileType,
-        file_size: fileSize,
+        file_path: filePath || null,
+        file_type: fileType || null,
+        file_size: fileSize || null,
         document_type: uploadForm.document_type,
         is_url: uploadForm.is_url,
         url: uploadForm.is_url ? uploadForm.url : null,
         url_excerpt: uploadForm.is_url ? uploadForm.url_excerpt : null,
-        url_published_date: uploadForm.is_url && uploadForm.url_published_date ? uploadForm.url_published_date : null,
+        url_publication_date: uploadForm.is_url && uploadForm.url_publication_date ? uploadForm.url_publication_date : null,
         url_source: uploadForm.is_url ? uploadForm.url_source : null
       }
 
@@ -572,7 +572,7 @@ export default function Admin() {
         is_url: false,
         url: '',
         url_excerpt: '',
-        url_published_date: '',
+        url_publication_date: '',
         url_source: ''
       })
       loadData()
@@ -588,16 +588,18 @@ export default function Admin() {
     }
   }
 
-  const confirmDeleteDocument = (docId: string, docName: string, filePath: string) => {
-    setDeleteConfirm({ type: 'document', id: docId, name: docName, filePath })
+  const confirmDeleteDocument = (docId: string, docName: string, filePath: string | null) => {
+    setDeleteConfirm({ type: 'document', id: docId, name: docName, filePath: filePath || '' })
   }
 
-  const handleDeleteDocument = async (docId: string, filePath: string, docName: string) => {
+  const handleDeleteDocument = async (docId: string, filePath: string | null, docName: string) => {
     try {
-      // Delete from storage
-      await supabase.storage
-        .from('documents')
-        .remove([filePath])
+      // Delete from storage (only if file exists)
+      if (filePath) {
+        await supabase.storage
+          .from('documents')
+          .remove([filePath])
+      }
 
       // Delete from database
       const { error } = await supabase
@@ -1521,14 +1523,14 @@ export default function Admin() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="url_published_date">Fecha de Publicación</Label>
+                          <Label htmlFor="url_publication_date">Fecha de Publicación</Label>
                           <Input
-                            id="url_published_date"
+                            id="url_publication_date"
                             type="date"
-                            value={uploadForm.url_published_date}
+                            value={uploadForm.url_publication_date}
                             onChange={(e) => setUploadForm(prev => ({ 
                               ...prev, 
-                              url_published_date: e.target.value 
+                              url_publication_date: e.target.value 
                             }))}
                           />
                         </div>

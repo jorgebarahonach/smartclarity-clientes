@@ -29,7 +29,7 @@ type Document = {
   is_url: boolean
   url?: string
   url_excerpt?: string
-  url_published_date?: string
+  url_publication_date?: string
   url_source?: string
 }
 
@@ -260,11 +260,11 @@ export default function ProjectView() {
                                <p className="text-xs text-muted-foreground line-clamp-2">
                                  🔗 {doc.url_excerpt || doc.url}
                                </p>
-                               {doc.url_published_date && (
-                                 <p className="text-xs text-muted-foreground">
-                                   📅 {new Date(doc.url_published_date).toLocaleDateString('es-ES')}
-                                 </p>
-                               )}
+                                {doc.url_publication_date && (
+                                  <p className="text-xs text-muted-foreground">
+                                    📅 {new Date(doc.url_publication_date).toLocaleDateString('es-ES')}
+                                  </p>
+                                )}
                                {doc.url_source && (
                                  <p className="text-xs text-muted-foreground">
                                    📰 {doc.url_source}

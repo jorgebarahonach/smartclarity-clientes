@@ -39,7 +39,7 @@ type Document = {
   is_url: boolean
   url?: string
   url_excerpt?: string
-  url_published_date?: string
+  url_publication_date?: string
   url_source?: string
 }
 
