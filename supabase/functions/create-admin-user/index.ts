@@ -12,14 +12,62 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Check for Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Verify user is authenticated
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 3. Verify user has admin role
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .single();
+
+    if (roleError || !roleData) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { email, password = "TempPassword123!" } = await req.json();
 
-    console.log(`Creating admin user for email: ${email}`);
+    // Input validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Creating admin user for email: ${email} by admin: ${user.email}`);
 
     // Create the user
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -37,16 +85,16 @@ serve(async (req) => {
 
     // Assign admin role to the new user
     if (data.user?.id) {
-      const { error: roleError } = await supabaseAdmin
+      const { error: assignRoleError } = await supabaseAdmin
         .from('user_roles')
         .insert({ 
           user_id: data.user.id, 
           role: 'admin' 
         });
 
-      if (roleError) {
-        console.error('Failed to assign admin role:', roleError);
-        throw roleError;
+      if (assignRoleError) {
+        console.error('Failed to assign admin role:', assignRoleError);
+        throw assignRoleError;
       }
 
       console.log('Admin role assigned successfully');

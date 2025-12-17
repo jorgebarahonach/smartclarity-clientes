@@ -19,6 +19,16 @@ interface UpdateNotificationRequest {
   adminEmail: string;
 }
 
+// Helper function to escape HTML to prevent XSS
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,16 +37,69 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseKey || !supabaseAnonKey) {
       throw new Error('Missing Supabase credentials');
+    }
+
+    // 1. Check for Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Verify user is authenticated
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // 3. Verify user has admin role
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .single();
+
+    if (roleError || !roleData) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { companyId, documentName, isUrl, adminEmail }: UpdateNotificationRequest = await req.json();
 
-    console.log('Processing update notification for company:', companyId);
+    // Input validation
+    if (!companyId || typeof companyId !== 'string') {
+      return new Response(JSON.stringify({ error: "Invalid companyId" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!documentName || typeof documentName !== 'string' || documentName.length > 500) {
+      return new Response(JSON.stringify({ error: "Invalid documentName" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Processing update notification for company: ${companyId} by admin: ${user.email}`);
 
     // Obtener el email del cliente de la empresa
     const { data: company, error: companyError } = await supabase
@@ -86,6 +149,10 @@ const handler = async (req: Request): Promise<Response> => {
     const documentType = isUrl ? 'URL' : 'Archivo';
     const portalLink = `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app') || 'https://smartclarity.lovable.app'}/dashboard`;
 
+    // Escape documentName and company.name to prevent XSS
+    const safeDocumentName = escapeHtml(documentName);
+    const safeCompanyName = escapeHtml(company.name);
+
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -107,10 +174,10 @@ const handler = async (req: Request): Promise<Response> => {
               <h1>SmartClarity</h1>
             </div>
             <div class="content">
-              <h2>Hola ${company.name},</h2>
+              <h2>Hola ${safeCompanyName},</h2>
               <p>Hemos actualizado su Portal de Cliente con lo siguiente:</p>
               <div class="update-item">
-                <strong>• ${documentType}:</strong> ${documentName}
+                <strong>• ${documentType}:</strong> ${safeDocumentName}
               </div>
               <p style="text-align: center;">
                 <a href="${portalLink}" class="cta-button">Ir al Portal de Cliente</a>
