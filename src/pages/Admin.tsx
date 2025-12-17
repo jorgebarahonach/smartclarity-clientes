@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
   AlertDialog, 
@@ -1959,92 +1960,102 @@ export default function Admin() {
                 </p>
               </div>
 
-              {/* Lista de documentos */}
-              <div className="space-y-3">
-                {paginatedDocuments.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>
-                      No se encontraron documentos con los filtros aplicados.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  paginatedDocuments.map((doc) => {
-                    const fileExtension = doc.is_url ? 'URL' : (
-                      doc.original_file_name?.split('.').pop()?.toUpperCase() || 
-                      doc.file_path?.split('.').pop()?.toUpperCase() || 'FILE'
-                    )
-                    const projectNames = doc.projectIds?.map(pid => 
-                      projects.find(p => p.id === pid)?.name
-                    ).filter(Boolean).join(', ') || 'Sin proyecto'
+              {/* Lista de documentos como tabla */}
+              {paginatedDocuments.length === 0 ? (
+                <Alert>
+                  <AlertDescription>
+                    No se encontraron documentos con los filtros aplicados.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Nombre</TableHead>
+                        <TableHead className="w-[12%]">Tipo</TableHead>
+                        <TableHead className="w-[28%]">Proyectos</TableHead>
+                        <TableHead className="w-[12%]">Fecha</TableHead>
+                        <TableHead className="w-[8%] text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedDocuments.map((doc) => {
+                        const fileExtension = doc.is_url ? 'URL' : (
+                          doc.original_file_name?.split('.').pop()?.toUpperCase() || 
+                          doc.file_path?.split('.').pop()?.toUpperCase() || 'FILE'
+                        )
+                        const projectNames = doc.projectIds?.map(pid => 
+                          projects.find(p => p.id === pid)?.name
+                        ).filter(Boolean).join(', ') || 'Sin proyecto'
 
-                    return (
-                      <Card key={doc.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-2">
+                        return (
+                          <TableRow key={doc.id}>
+                            <TableCell>
                               <div className="flex items-center gap-2">
                                 {doc.is_url ? (
                                   <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 ) : (
                                   <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 )}
-                                <h4 className="font-medium">{doc.name}</h4>
+                                <div className="min-w-0">
+                                  <span className="font-medium truncate block">{doc.name}</span>
+                                  {doc.is_url && doc.url && (
+                                    <a 
+                                      href={doc.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-primary hover:underline truncate block max-w-[250px]"
+                                    >
+                                      {doc.url}
+                                    </a>
+                                  )}
+                                </div>
                               </div>
-
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Badge variant="secondary" className="text-xs">
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-1">
+                                <Badge variant="secondary" className="text-xs w-fit">
                                   {doc.document_type}
                                 </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  .{fileExtension}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(doc.created_at).toLocaleDateString('es-ES')}
-                                </span>
+                                <span className="text-xs text-muted-foreground">.{fileExtension}</span>
                               </div>
-
-                              <p className="text-xs text-muted-foreground">
-                                Proyectos: {projectNames}
-                              </p>
-
-                              {doc.is_url && doc.url && (
-                                <a 
-                                  href={doc.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                                >
-                                  {doc.url}
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {!doc.is_url && doc.file_path && (
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground line-clamp-2">{projectNames}</span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(doc.created_at).toLocaleDateString('es-ES')}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-end gap-1">
+                                {!doc.is_url && doc.file_path && (
+                                  <button
+                                    className="p-1.5 rounded hover:bg-muted"
+                                    onClick={() => handleDownloadDocument(doc.file_path!, doc.original_file_name || doc.name)}
+                                    title="Descargar documento"
+                                  >
+                                    <Download className="h-4 w-4 text-primary" />
+                                  </button>
+                                )}
                                 <button
                                   className="p-1.5 rounded hover:bg-muted"
-                                  onClick={() => handleDownloadDocument(doc.file_path!, doc.original_file_name || doc.name)}
-                                  title="Descargar documento"
+                                  onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
+                                  title="Eliminar documento"
                                 >
-                                  <Download className="h-4 w-4 text-primary" />
+                                  <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
                                 </button>
-                              )}
-                              <button
-                                className="p-1.5 rounded hover:bg-muted"
-                                onClick={() => confirmDeleteDocument(doc.id, doc.name, doc.file_path)}
-                                title="Eliminar documento"
-                              >
-                                <Trash2 className="h-4 w-4 text-[hsl(var(--action-red))]" />
-                              </button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })
-                )}
-              </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
 
               {/* Paginación */}
               {totalPages > 1 && (
