@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,46 +84,33 @@ serve(async (req) => {
       });
     }
 
-    // Get EmailJS credentials from secrets
-    const serviceId = Deno.env.get("EMAILJS_SERVICE_ID");
-    const templateId = Deno.env.get("EMAILJS_TEMPLATE_ID");
-    const userId = Deno.env.get("EMAILJS_USER_ID");
-
-    if (!serviceId || !templateId || !userId) {
-      console.error("EmailJS credentials not configured");
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Send email via EmailJS API
-    const emailResponse = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        service_id: serviceId,
-        template_id: templateId,
-        user_id: userId,
-        template_params: {
-          company_name: companyName,
-          document_name: documentName,
-          document_type: documentType,
-          portal_link: portalLink,
-          to_email: toEmail,
-        },
-      }),
+    // Send email via Resend
+    const { data, error: emailError } = await resend.emails.send({
+      from: "SmartClarity <onboarding@resend.dev>",
+      to: [toEmail],
+      subject: `Nuevo documento disponible - ${companyName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Nuevo documento disponible</h2>
+          <p>Hola,</p>
+          <p>Se ha subido un nuevo documento para <strong>${companyName}</strong>:</p>
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Documento:</strong> ${documentName}</p>
+            <p style="margin: 5px 0;"><strong>Tipo:</strong> ${documentType}</p>
+          </div>
+          <p>Puedes acceder al portal para ver el documento:</p>
+          <a href="${portalLink}" style="display: inline-block; background-color: #0066cc; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ver documento</a>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">Este es un mensaje automático de SmartClarity.</p>
+        </div>
+      `,
     });
 
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error("EmailJS error:", errorText);
-      throw new Error(`Failed to send email: ${errorText}`);
+    if (emailError) {
+      console.error("Resend error:", emailError);
+      throw new Error(`Failed to send email: ${emailError.message}`);
     }
 
-    console.log(`Email notification sent to ${toEmail} for company ${companyName}`);
+    console.log(`Email notification sent to ${toEmail} for company ${companyName}`, data);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
