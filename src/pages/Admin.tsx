@@ -227,7 +227,15 @@ export default function Admin() {
         body: { email: newCompany.email, password: newCompany.password }
       })
 
+      // Check both for function error and response error
       if (authError) throw authError
+      if (authData?.error) {
+        // Handle specific error messages
+        if (authData.error.includes('already been registered')) {
+          throw new Error('Este email ya está registrado en el sistema')
+        }
+        throw new Error(authData.error)
+      }
 
       // Then create the company record
       const { error } = await supabase
@@ -245,11 +253,11 @@ export default function Admin() {
       setNewCompany({ name: '', email: '', password: '' })
       setShowNewCompanyForm(false)
       loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating company:', error)
       toast({
         title: "Error",
-        description: "Error al crear la empresa. Verifique que el email no esté en uso.",
+        description: error.message || "Error al crear la empresa. Verifique que el email no esté en uso.",
         variant: "destructive",
       })
     }
@@ -371,15 +379,18 @@ export default function Admin() {
         body: { email: companyEmail, password: newPassword }
       })
 
-      if (error) {
+      // Check both function error and response error
+      if (error || data?.error) {
+        const errorMsg = error?.message || data?.error || ''
         // If user exists, try password update instead
-        if (error.message?.includes('already') || error.message?.includes('exists')) {
-          const { error: updateError } = await supabase.functions.invoke('admin-update-password', {
+        if (errorMsg.includes('already') || errorMsg.includes('exists') || errorMsg.includes('registered')) {
+          const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-password', {
             body: { email: companyEmail, password: newPassword }
           })
           if (updateError) throw updateError
+          if (updateData?.error) throw new Error(updateData.error)
         } else {
-          throw error
+          throw new Error(errorMsg || 'Error desconocido')
         }
       }
 
