@@ -364,7 +364,9 @@ export default function Admin() {
   }
 
   const handleResetPassword = async (companyEmail: string) => {
-    if (!newPassword) {
+    const password = newPassword.trim()
+
+    if (!password) {
       toast({
         title: "Error",
         description: "Ingrese una nueva contraseña",
@@ -373,39 +375,80 @@ export default function Admin() {
       return
     }
 
+    if (password.length < 8) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 8 caracteres",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const readEdgeError = async (res?: Response) => {
+      if (!res) return ''
+      try {
+        const ct = res.headers.get('content-type') ?? ''
+        if (ct.includes('application/json')) {
+          const json = await res.clone().json()
+          return typeof json?.error === 'string' ? json.error : JSON.stringify(json)
+        }
+        return await res.clone().text()
+      } catch {
+        return ''
+      }
+    }
+
     try {
-      // Try to create user first (handles both creation and password update)
-      const { data, error } = await supabase.functions.invoke('admin-create-user', {
-        body: { email: companyEmail, password: newPassword }
+      // Prefer updating password first (most common case)
+      const {
+        data: updateData,
+        error: updateError,
+        response: updateResponse,
+      } = await supabase.functions.invoke('admin-update-password', {
+        body: { email: companyEmail, password }
       })
 
-      // Check both function error and response error
-      if (error || data?.error) {
-        const errorMsg = error?.message || data?.error || ''
-        // If user exists, try password update instead
-        if (errorMsg.includes('already') || errorMsg.includes('exists') || errorMsg.includes('registered')) {
-          const { data: updateData, error: updateError } = await supabase.functions.invoke('admin-update-password', {
-            body: { email: companyEmail, password: newPassword }
+      if (updateError || updateData?.error) {
+        const msg =
+          (updateData?.error as string | undefined) ||
+          (await readEdgeError(updateResponse)) ||
+          updateError?.message ||
+          ''
+
+        // If user doesn't exist, create it (rare)
+        if (updateResponse?.status === 404 || msg.toLowerCase().includes('no encontrado')) {
+          const {
+            data: createData,
+            error: createError,
+            response: createResponse,
+          } = await supabase.functions.invoke('admin-create-user', {
+            body: { email: companyEmail, password }
           })
-          if (updateError) throw updateError
-          if (updateData?.error) throw new Error(updateData.error)
+
+          if (createError || createData?.error) {
+            const createMsg =
+              (createData?.error as string | undefined) ||
+              (await readEdgeError(createResponse)) ||
+              createError?.message ||
+              ''
+            throw new Error(createMsg || 'Error al crear el usuario')
+          }
         } else {
-          throw new Error(errorMsg || 'Error desconocido')
+          throw new Error(msg || 'Error al actualizar la contraseña')
         }
       }
 
       toast({
         variant: "success",
         title: "Éxito",
-        description: "Usuario creado/contraseña actualizada correctamente",
+        description: "Contraseña actualizada correctamente",
       })
-      
+
       setShowPasswordReset(null)
       setNewPassword('')
-      
+
       // Refresh companies list to update status
       await loadData()
-      
     } catch (error: any) {
       console.error('Error with user/password:', error)
       toast({
