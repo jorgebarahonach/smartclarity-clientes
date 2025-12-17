@@ -1892,11 +1892,30 @@ export default function Admin() {
                         </SelectTrigger>
                         <SelectContent className="bg-background">
                           <SelectItem value="all">Todos</SelectItem>
-                          {projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.name}
-                            </SelectItem>
-                          ))}
+                          {projects
+                            .filter(p => !p.is_default)
+                            .map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          {projects.some(p => p.is_default) && (
+                            <>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                                Proyectos estratégicos
+                              </div>
+                              {projects
+                                .filter(p => p.is_default)
+                                .map((project) => {
+                                  const company = companies.find(c => c.id === project.company_id)
+                                  return (
+                                    <SelectItem key={project.id} value={project.id}>
+                                      {company?.name || 'Sin empresa'}
+                                    </SelectItem>
+                                  )
+                                })}
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
