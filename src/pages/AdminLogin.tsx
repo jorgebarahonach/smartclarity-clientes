@@ -7,8 +7,6 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Shield } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
@@ -19,7 +17,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false)
   const { signIn, user, isAdmin, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const { toast } = useToast()
 
   // Si ya está autenticado como admin, redirigir automáticamente
   useEffect(() => {
@@ -36,68 +33,8 @@ export default function AdminLogin() {
     try {
       await signIn(email, password)
       // Redirigimos cuando la sesión esté lista desde el listener de auth
-    } catch (err) {
-      // Fallback automático: crear/restablecer admin y reintentar login
-      try {
-        const { error } = await supabase.functions.invoke('bootstrap-admin', {
-          body: { email, password, role: 'admin' },
-        })
-        if (error) throw error
-        toast({ variant: 'success', title: 'Admin listo', description: 'Intentando ingresar automáticamente...' })
-        await signIn(email, password)
-      } catch (e: any) {
-        setError(e?.message || 'Credenciales incorrectas. Verifique su email y contraseña.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleBootstrapAdmin = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { error } = await supabase.functions.invoke('bootstrap-admin', {
-        body: { email, password, role: 'admin' },
-      })
-      if (error) throw error
-      toast({ variant: 'success', title: 'Admin listo', description: 'Ahora intenta iniciar sesión.' })
-    } catch (e: any) {
-      setError(e?.message || 'No se pudo crear/restablecer el admin')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCreateClient = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { error } = await supabase.functions.invoke('bootstrap-admin', {
-        body: { email, password, role: 'client' },
-      })
-      if (error) throw error
-      toast({ variant: 'success', title: 'Cliente creado', description: 'Usuario cliente creado exitosamente.' })
-    } catch (e: any) {
-      setError(e?.message || 'No se pudo crear el cliente')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSetupSystem = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const { data, error } = await supabase.functions.invoke('setup-complete-system')
-      if (error) throw error
-      toast({ 
-        variant: 'success',
-        title: 'Sistema configurado', 
-        description: `Completado. Empresas procesadas: ${data?.results?.length || 0}` 
-      })
-    } catch (e: any) {
-      setError(e?.message || 'Error configurando el sistema')
+    } catch (err: any) {
+      setError(err?.message || 'Credenciales incorrectas. Verifique su email y contraseña.')
     } finally {
       setLoading(false)
     }
@@ -153,14 +90,6 @@ export default function AdminLogin() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Ingresar al Panel
-              </Button>
-              <Button type="button" variant="outline" className="w-full" disabled={loading} onClick={handleBootstrapAdmin}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Crear/Restablecer Admin inicial
-              </Button>
-              <Button type="button" variant="secondary" className="w-full" disabled={loading} onClick={handleSetupSystem}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Configurar Sistema Completo
               </Button>
             </div>
             <div className="text-center mt-2">

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
-import emailjs from '@emailjs/browser'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -609,18 +608,15 @@ export default function Admin() {
               const portalLink = window.location.origin + '/dashboard';
 
               try {
-                await emailjs.send(
-                  'ayerviernes', // SERVICE_ID
-                  'template_4q7c2xa', // TEMPLATE_ID
-                  {
-                    company_name: company.name,
-                    document_name: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
-                    document_type: documentType,
-                    portal_link: portalLink,
-                    to_email: company.email,
+                await supabase.functions.invoke('send-email-notification', {
+                  body: {
+                    companyName: company.name,
+                    documentName: uploadForm.document_name || (uploadForm.is_url ? uploadForm.url : uploadForm.file?.name),
+                    documentType: documentType,
+                    portalLink: portalLink,
+                    toEmail: company.email,
                   },
-                  '6wJfvoAA_w-mnkUnz' // USER_ID
-                );
+                });
                 console.log(`Email enviado a ${company.name}`);
               } catch (emailError) {
                 console.error('Error enviando email:', emailError);
