@@ -12,12 +12,46 @@ serve(async (req) => {
   }
 
   try {
+    const { email, password, firstName, lastName, role = 'admin', bootstrapSecret } = await req.json();
+
+    // SECURITY: Require bootstrap secret for this sensitive operation
+    const expectedSecret = Deno.env.get("BOOTSTRAP_SECRET");
+    if (!expectedSecret) {
+      console.error("BOOTSTRAP_SECRET not configured");
+      return new Response(JSON.stringify({ error: "Bootstrap not configured. Please set BOOTSTRAP_SECRET in Edge Function secrets." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!bootstrapSecret || bootstrapSecret !== expectedSecret) {
+      console.warn("Unauthorized bootstrap attempt");
+      return new Response(JSON.stringify({ error: "Unauthorized: Invalid bootstrap secret" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Input validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!password || password.length < 8) {
+      return new Response(JSON.stringify({ error: "Password must be at least 8 characters" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-
-    const { email, password, firstName, lastName, role = 'admin' } = await req.json();
 
     // Try to find existing user by email
     const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -35,6 +69,7 @@ serve(async (req) => {
         user_metadata: { firstName, lastName }
       });
       if (updateError) throw updateError;
+      console.log(`Updated existing user: ${email}`);
     } else {
       // Create user in auth.users
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -46,6 +81,7 @@ serve(async (req) => {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
       userId = authData.user.id;
+      console.log(`Created new user: ${email}`);
     }
 
     // Upsert role
@@ -61,6 +97,8 @@ serve(async (req) => {
       throw roleError;
     }
 
+    console.log(`Bootstrap completed for ${email} with role ${role}`);
+
     return new Response(JSON.stringify({ 
       success: true,
       message: existingUser ? `Usuario ${email} actualizado y rol ${role} asignado` : `Usuario ${email} creado con rol ${role}`
@@ -69,6 +107,7 @@ serve(async (req) => {
     });
 
   } catch (error: any) {
+    console.error("Bootstrap error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
